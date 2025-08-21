@@ -330,7 +330,7 @@ public:
 		skillMods.put(skillMod, value);
 	}
 
-	//bool isWearingArmor(CreatureObject* creo) const {
+	bool isWearingArmor(CreatureObject* creo) const {
 	//	for (int i = 0; i < creo->getSlottedObjectsSize(); ++i) {
 	//		SceneObject* item = creo->getSlottedObject(i);
 	//		if (item != nullptr && item->isArmorObject())
