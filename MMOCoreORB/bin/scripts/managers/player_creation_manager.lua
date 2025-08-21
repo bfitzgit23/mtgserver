@@ -7,13 +7,13 @@ startingCash = 200000
 startingBank = 200000
 --startingBank = 100000
 --How many skill points a new characters start with
-skillPoints = 250
+skillPoints = 500
 
 professions = {
 	"combat_brawler",
 	"combat_marksman",
 	"crafting_artisan",
-	"jedi",
+	"jedi_padawan",
 	"outdoors_scout",
 	"science_medic",
 	"social_entertainer"
