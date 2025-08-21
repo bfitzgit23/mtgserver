@@ -59,7 +59,7 @@ Core3 = {
 	DBPort = 3306,
 	DBName = "swgemu",
 	DBUser = "swgemu",
-	DBPass = "NuttySWG12",
+	DBPass = "123456",
 	DBInstances = 2,
 	DBSecret = "swgemus3cr37!", -- Change this! This value should be unique and of reasonable length.
 
@@ -165,7 +165,7 @@ Core3 = {
 	},
 
 	------TRE config------
-	TrePath = "/tre",
+	TrePath = "/home/swgadmin/tre",
 
 	TreFiles = {
 		"kashyyyk_addons_00.tre",
