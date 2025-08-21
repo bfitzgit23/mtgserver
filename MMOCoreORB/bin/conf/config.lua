@@ -168,7 +168,9 @@ Core3 = {
 	TrePath = "/tre",
 
 	TreFiles = {
-		"hunted_custom.tre",
+		"kashyyyk_addons_00.tre",
+		"kashyyyk_custom_00.tre",
+		"skills_01.tre.tre",
 		"mtg_patch_023.tre",
 		"mtg_patch_022.tre",
 		"mtg_planets.tre",
