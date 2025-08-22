@@ -168,9 +168,9 @@ Core3 = {
 	TrePath = "/home/swgadmin/tre",
 
 	TreFiles = {
-		"kashyyyk_addons_00.tre",
+		"Kashyyyk_addons_00.tre",
 		"kashyyyk_custom_00.tre",
-		"skills_01.tre.tre",
+		"skills_01.tre",
 		"mtg_patch_023.tre",
 		"mtg_patch_022.tre",
 		"mtg_planets.tre",
