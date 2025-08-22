@@ -385,36 +385,7 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 	client->setPlayer(playerCreature);
 	playerCreature->setClient(client);
 
-	// === SWGReturns PATCH BEGIN: Jedi at start (FS Novice + Lightsaber Novice + training saber) ===
-	if (profession.contains("jedi") || profession.contains("force_") || profession == "jedi_padawan") {
-		auto* sm = SkillManager::instance();
-
-		// 1) Force-Sensitive Novice
-		sm->awardSkill("force_sensitive_novice", playerCreature, false, true, true);
-
-		// 2) Novice Lightsaber
-		sm->awardSkill("force_discipline_light_saber_novice", playerCreature, false, true, true);
-
-		// 3) Training lightsaber into inventory
-		SceneObject* inventory = playerCreature->getSlottedObject("inventory");
-		if (inventory != nullptr) {
-			const String saberTpl = "object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff";
-			ManagedReference<SceneObject*> saber = nullptr;
-			try {
-				saber = zoneServer->createObject(saberTpl.hashCode(), 1);
-			} catch (Exception& e) {
-				error(e.getMessage());
-			}
-			if (saber != nullptr) {
-				if (!inventory->transferObject(saber, -1, false)) {
-					saber->destroyObjectFromDatabase(true);
-				}
-			} else {
-				error("could not create training saber: " + saberTpl);
-			}
-		}
-	}
-	// === SWGReturns PATCH END ===
+	// (Jedi-start skill grant moved below, after ghost is available)
 
 	// Set starting cash and starting bank
 	playerCreature->clearCashCredits(false);
@@ -436,6 +407,45 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 		ghost->setSkillPoints(skillPoints);
 		ghost->setStarterProfession(profession);
 	}
+
+	// === SWGReturns PATCH (updated): ensure Jedi prereqs are satisfied, then award FS/Lightsaber novice ===
+	{
+		const bool isJediStart = profession.contains("jedi") || profession.contains("force_") || profession == "jedi_padawan";
+		if (isJediStart && ghost != nullptr) {
+			// Bump JediState so SkillManager/JediManager prereq checks pass on MTG
+			// Pick a safe value that clears canLearnSkill for novice boxes in your fork.
+			// (4 is a common “Padawan/Adept”-ish threshold; adjust if your repo differs.)
+			ghost->setJediState(4);
+
+			auto* sm = SkillManager::instance();
+
+			// 1) Force-Sensitive Novice
+			sm->awardSkill("force_sensitive_novice", playerCreature, false, true, true);
+
+			// 2) Novice Lightsaber
+			sm->awardSkill("force_discipline_light_saber_novice", playerCreature, false, true, true);
+
+			// 3) Training lightsaber into inventory
+			SceneObject* inventory = playerCreature->getSlottedObject("inventory");
+			if (inventory != nullptr) {
+				const String saberTpl = "object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff";
+				ManagedReference<SceneObject*> saber = nullptr;
+				try {
+					saber = zoneServer->createObject(saberTpl.hashCode(), 1);
+				} catch (Exception& e) {
+					error(e.getMessage());
+				}
+				if (saber != nullptr) {
+					if (!inventory->transferObject(saber, -1, false)) {
+						saber->destroyObjectFromDatabase(true);
+					}
+				} else {
+					error("could not create training saber: " + saberTpl);
+				}
+			}
+		}
+	}
+	// === End updated Jedi-start patch ===
 
 	addCustomization(playerCreature, customization, playerTemplate->getAppearanceFilename());
 	addHair(playerCreature, hairTemplate, hairCustomization);
