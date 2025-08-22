@@ -43,204 +43,204 @@
 -- 0 = false, 1 = true
 
 Core3 = {
-	------Server Make Options------
-	MakeLogin = 1,
-	MakeZone = 1,
-	MakePing = 1,
-	MakeStatus = 1,
-	MakeWeb = 0,
+        ------Server Make Options------
+        MakeLogin = 1,
+        MakeZone = 1,
+        MakePing = 1,
+        MakeStatus = 1,
+        MakeWeb = 0,
 
-	------ORB Server Config------
-	ORB = "",
-	ORBPort = 44419,
+        ------ORB Server Config------
+        ORB = "",
+        ORBPort = 44419,
 
-	------Main Database Config------
-	DBHost = "127.0.0.1",
-	DBPort = 3306,
-	DBName = "swgemu",
-	DBUser = "swgemu",
-	DBPass = "123456",
-	DBInstances = 2,
-	DBSecret = "swgemus3cr37!", -- Change this! This value should be unique and of reasonable length.
+        ------Main Database Config------
+        DBHost = "127.0.0.1",
+        DBPort = 3306,
+        DBName = "swgemu",
+        DBUser = "swgemu",
+        DBPass = "123456",
+        DBInstances = 2,
+        DBSecret = "swgemus3cr37!", -- Change this! This value should be unique and of reasonable length.
 
-	------Login Server Config------
-	LoginPort = 44453,
-	LoginProcessingThreads = 1,
-	LoginAllowedConnections = 3000,
-	LoginRequiredVersion = "20050408-18:00",
+        ------Login Server Config------
+        LoginPort = 44453,
+        LoginProcessingThreads = 1,
+        LoginAllowedConnections = 3000,
+        LoginRequiredVersion = "20050408-18:00",
 
-	------Mantis Database Config------
-	MantisHost = "127.0.0.1",
-	MantisPort = 3306,
-	MantisName = "swgemu",
-	MantisUser = "swgemu",
-	MantisPass = "123456",
-	MantisPrfx = "mantis_", -- The prefix for your mantis tables.
+        ------Mantis Database Config------
+        MantisHost = "127.0.0.1",
+        MantisPort = 3306,
+        MantisName = "swgemu",
+        MantisUser = "swgemu",
+        MantisPass = "123456",
+        MantisPrfx = "mantis_", -- The prefix for your mantis tables.
 
-	------Metrics Server Config------
-	MetricsHost = "localhost",
-	MetricsPort = 8125,
-	MetricsPrefix = "",
+        ------Metrics Server Config------
+        MetricsHost = "localhost",
+        MetricsPort = 8125,
+        MetricsPrefix = "",
 
-	------Ping Server Config------
-	PingPort = 44462,
-	PingAllowedConnections = 3000,
+        ------Ping Server Config------
+        PingPort = 44462,
+        PingAllowedConnections = 3000,
 
-	------Zone Server config------
-	ZoneProcessingThreads = 10,
-	ZoneAllowedConnections = 30000,
-	ZoneGalaxyID = 2, --The actual zone server's galaxyID. Should coordinate with your login server.
+        ------Zone Server config------
+        ZoneProcessingThreads = 10,
+        ZoneAllowedConnections = 30000,
+        ZoneGalaxyID = 2, --The actual zone server's galaxyID. Should coordinate with your login server.
 
-	-------- GROUND ZONES -------
-	ZonesEnabled = {
-		-------- PRE-CU ZONES -------
-		"corellia",
-		"dantooine",
-		"dathomir",
-		"dungeon1",
-		"endor",
-		"lok",
-		"naboo",
-		"rori",
-		"talus",
-		"tatooine",
-		"tutorial",
-		"yavin4",
-		-------- NEW CONTENT ZONES -------
-		"chandrila",
-		"coruscant",
-		"dungeon2",
-		"hoth",
-		"kaas",
-		"kashyyyk",
-		"kashyyyk_hunting",
-		"kashyyyk_rryatt_trail",
-		"kashyyyk_main",
-		"kashyyyk_south_dungeons",
-		"kashyyyk_north_dungeons",
-		"kashyyyk_pob_dungeons",
-		"kashyyyk_dead_forest",
-		"mandalore",
-		--"moraband",
-		"mustafar",
-		"taanab",
-		-------- TEST ZONES -------
-		--"09",
-		--"10",
-		--"11",
-		--"character_farm",
-		--"cinco_city_test_m5",
-		--"creature_test",
-		--"endor_asommers",
-		--"floratest",
-		--"godclient_test",
-		--"otoh_gunga",
-		--"rivertest",
-		--"runtimerules",
-		--"simple",
-		--"taanab",
-		--"test_wearables",
-		--"umbra",
-		--"watertabletest",
-	},
-	-------- SPACE ZONES -------
-	SpaceZonesEnabled = {
-		"space_corellia",
-		"space_dantooine",
-		"space_dathomir",
-		"space_endor",
-		"space_heavy1",
-		"space_light1",
-		"space_lok",
-		"space_naboo",
-		"space_tatooine",
-		"space_yavin4"
-		---- TEST ZONES ----
-		--"space_09",
-		--"space_corellia_2",
-		--"space_env",
-		--"space_halos",
-		--"space_naboo_2",
-		--"space_tatooine_2",
-	},
+        -------- GROUND ZONES -------
+        ZonesEnabled = {
+                -------- PRE-CU ZONES -------
+                "corellia",
+                "dantooine",
+                "dathomir",
+                "dungeon1",
+                "endor",
+                "lok",
+                "naboo",
+                "rori",
+                "talus",
+                "tatooine",
+                "tutorial",
+                "yavin4",
+                -------- NEW CONTENT ZONES -------
+                "chandrila",
+                "coruscant",
+                "dungeon2",
+                "hoth",
+                "kaas",
+                "kashyyyk",
+                "kashyyyk_hunting",
+                "kashyyyk_rryatt_trail",
+                "kashyyyk_main",
+                "kashyyyk_south_dungeons",
+                "kashyyyk_north_dungeons",
+                "kashyyyk_pob_dungeons",
+                "kashyyyk_dead_forest",
+                "mandalore",
+                --"moraband",
+                "mustafar",
+                "taanab",
+                -------- TEST ZONES -------
+                --"09",
+                --"10",
+                --"11",
+                --"character_farm",
+                --"cinco_city_test_m5",
+                --"creature_test",
+                --"endor_asommers",
+                --"floratest",
+                --"godclient_test",
+                --"otoh_gunga",
+                --"rivertest",
+                --"runtimerules",
+                --"simple",
+                --"taanab",
+                --"test_wearables",
+                --"umbra",
+                --"watertabletest",
+        },
+        -------- SPACE ZONES -------
+        SpaceZonesEnabled = {
+                "space_corellia",
+                "space_dantooine",
+                "space_dathomir",
+                "space_endor",
+                "space_heavy1",
+                "space_light1",
+                "space_lok",
+                "space_naboo",
+                "space_tatooine",
+                "space_yavin4"
+                ---- TEST ZONES ----
+                --"space_09",
+                --"space_corellia_2",
+                --"space_env",
+                --"space_halos",
+                --"space_naboo_2",
+                --"space_tatooine_2",
+        },
 
-	------TRE config------
-	TrePath = "/home/swgadmin/tre",
+        ------TRE config------
+        TrePath = "/home/swgadmin/tre",
 
-	TreFiles = {
-		"skills_01.tre",
-		"mtg_patch_023.tre",
-		"mtg_patch_022.tre",
-		"mtg_planets.tre",
-		"mtg_patch_021.tre",
-		--"mtg_patch_020.tre",
-		"mtg_patch_019.tre",
-		"mtg_patch_018.tre",
-		"mtg_patch_017.tre",
-		"mtg_patch_016.tre",
-		"mtg_patch_015.tre",
-		"mtg_patch_014.tre",
-		"mtg_patch_013_configurable_02.tre",
-		"mtg_patch_012_configurable_01.tre",
-		"mtg_patch_011_files_01.tre",
-		"mtg_patch_010_object_01.tre",
-		"mtg_patch_009_Shader_01.tre",
-		"mtg_patch_008_texture_04.tre",
-		"mtg_patch_007_texture_03.tre",
-		"mtg_patch_006_texture_02.tre",
-		"mtg_patch_005_texture_01.tre",
-		"mtg_patch_004_appearance_04.tre",
-		"mtg_patch_003_appearance_03.tre",
-		"mtg_patch_002_appearance_02.tre",
-		"mtg_patch_001_appearance_01.tre"
-	},
+        TreFiles = {
+                "skills_01.tre",
+                "mtg_patch_023.tre",
+                "mtg_patch_022.tre",
+                "mtg_planets.tre",
+                "mtg_patch_021.tre",
+                --"mtg_patch_020.tre",
+                "mtg_patch_019.tre",
+                "mtg_patch_018.tre",
+                "mtg_patch_017.tre",
+                "mtg_patch_016.tre",
+                "mtg_patch_015.tre",
+                "mtg_patch_014.tre",
+                "mtg_patch_013_configurable_02.tre",
+                "mtg_patch_012_configurable_01.tre",
+                "mtg_patch_011_files_01.tre",
+                "mtg_patch_010_object_01.tre",
+                "mtg_patch_009_Shader_01.tre",
+                "mtg_patch_008_texture_04.tre",
+                "mtg_patch_007_texture_03.tre",
+                "mtg_patch_006_texture_02.tre",
+                "mtg_patch_005_texture_01.tre",
+                "mtg_patch_004_appearance_04.tre",
+                "mtg_patch_003_appearance_03.tre",
+                "mtg_patch_002_appearance_02.tre",
+                "mtg_patch_001_appearance_01.tre"
+        },
 
-	------Status Server Config------
-	StatusPort = 44455,
-	StatusAllowedConnections = 500,
-	StatusInterval = 30, -- interval to check if zone is locked up (in seconds)
+        ------Status Server Config------
+        StatusPort = 44455,
+        StatusAllowedConnections = 500,
+        StatusInterval = 30, -- interval to check if zone is locked up (in seconds)
 
-	------Web Server Config------
-	WebPorts = 44460, -- Can be multiple ports 44460,44461
-	WebAccessLog = "../log/webaccess.log",
-	WebErrorLog = "../log/weberror.log",
-	WebSessionTimeout = 600, -- Length that inactive web sessions expire
+        ------Web Server Config------
+        WebPorts = 44460, -- Can be multiple ports 44460,44461
+        WebAccessLog = "../log/webaccess.log",
+        WebErrorLog = "../log/weberror.log",
+        WebSessionTimeout = 600, -- Length that inactive web sessions expire
 
-	------Logging Config------
-	LogFile = "log/core3.log",
-	LogFileLevel = 4, -- -1 NONE, 0 FATAL, 1 ERROR, 2 WARNING, 3 LOG, 4 INFO, 5 DEBUG
-	LogJSON = 0, -- global log output in JSON format
-	LogSync = 0, -- flush global log file after each write
-	LuaLogJSON = 0,
-	PathfinderLogJSON = 0,
-	PlayerLogLevel = 4, -- -1 NONE, 0 FATAL, 1 ERROR, 2 WARNING, 3 LOG, 4 INFO, 5 DEBUG
-	MaxLogLines = 1000000, -- how often to rotate log (currently only log/player.log rotates)
+        ------Logging Config------
+        LogFile = "log/core3.log",
+        LogFileLevel = 4, -- -1 NONE, 0 FATAL, 1 ERROR, 2 WARNING, 3 LOG, 4 INFO, 5 DEBUG
+        LogJSON = 0, -- global log output in JSON format
+        LogSync = 0, -- flush global log file after each write
+        LuaLogJSON = 0,
+        PathfinderLogJSON = 0,
+        PlayerLogLevel = 4, -- -1 NONE, 0 FATAL, 1 ERROR, 2 WARNING, 3 LOG, 4 INFO, 5 DEBUG
+        MaxLogLines = 1000000, -- how often to rotate log (currently only log/player.log rotates)
 
-	------REST Server Config------
-	RESTServerPort = 0,
+        ------REST Server Config------
+        RESTServerPort = 0,
 
-	------Account Config------
-	InactiveAccountTitle = "Account Disabled",
-	InactiveAccountText = "The server administrators have disabled your account.",
+        ------Account Config------
+        InactiveAccountTitle = "Account Disabled",
+        InactiveAccountText = "The server administrators have disabled your account.",
 
-	------Character Config------
-	CleanupMailCount = 25000,
-	DeleteCharacters = 10, -- How often in minutes to purge deleted characters
+        ------Character Config------
+        CleanupMailCount = 25000,
+        DeleteCharacters = 10, -- How often in minutes to purge deleted characters
 
-	------Extra Config ------
-	MaxNavMeshJobs = 6,
-	MaxAuctionSearchJobs = 1,
-	DumpObjFiles = 1,
-	ProgressMonitors = "true",
-	UnloadContainers = 1, -- Whether to unload container contents from RAM after the container hasn't been accessed for a time
+        ------Extra Config ------
+        MaxNavMeshJobs = 6,
+        MaxAuctionSearchJobs = 1,
+        DumpObjFiles = 1,
+        ProgressMonitors = "true",
+        UnloadContainers = 1, -- Whether to unload container contents from RAM after the container hasn't been accessed for a time
 
-	------Server Config------
-	CharacterBuilderEnabled = "true",
-	AutoReg = 1,
+        ------Server Config------
+        CharacterBuilderEnabled = "true",
+        AutoReg = 1,
 
-	------TOS Config------
-	TermsOfServiceVersion = 0,
-	TermsOfService = "",
+        ------TOS Config------
+        TermsOfServiceVersion = 0,
+        TermsOfService = "",
 }
 
 -- NOTE: conf/config-local.lua is parsed after this file if it exists
