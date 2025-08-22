@@ -406,54 +406,48 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 		ghost->setStarterProfession(profession);
 	}
 
-	// === SWGReturns PATCH: Jedi-start full kit (FS novice + Lightsaber novice + Jedi title + training saber) ===
-	{
-		const bool isJediStart = profession.contains("jedi") || profession.contains("force_") || profession == "jedi_padawan";
-		if (isJediStart && ghost != nullptr) {
-			// Lift Jedi gating so novice boxes can be learned at creation time
-			ghost->setJediState(4);
+	// === MTG PATCH: Jedi-start aligned to original + Lightsaber novice + training saber ===
+{
+    const bool isJediStart = profession.contains("jedi");
+    if (isJediStart && ghost != nullptr) {
+        // Original-style enablement (no full unlock, no FS novice)
+        ghost->setJediState(2);
+        ghost->addHologrindProfession(0);
+        SkillManager::instance()->awardSkill("force_title_jedi_rank_02", playerCreature, false, true, true);
 
-			auto* sm = SkillManager::instance();
+        // Allow saber usage at start WITHOUT granting FS novice
+        SkillManager::instance()->awardSkill("force_discipline_light_saber_novice", playerCreature, false, true, true);
 
-			// 1) Force-Sensitive Novice
-			sm->awardSkill("force_sensitive_novice", playerCreature, false, true, true);
+        // Drop a training lightsaber into inventory so the player can equip it immediately.
+        SceneObject* inventory = playerCreature->getSlottedObject("inventory");
+        if (inventory != nullptr) {
+            const String saberTpls[] = {
+                // prefer generic training saber; fallback to crafted if generic fails
+                "object/weapon/melee/sword/crafted_saber/generic_sword_lightsaber_training.iff",
+                "object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff"
+            };
+            for (int i = 0; i < 2; ++i) {
+                const String& saberTpl = saberTpls[i];
+                ManagedReference<SceneObject*> saber = nullptr;
+                try {
+                    saber = zoneServer->createObject(saberTpl.hashCode(), 1);
+                } catch (Exception& e) {
+                    error(e.getMessage());
+                }
+                if (saber != nullptr) {
+                    if (!inventory->transferObject(saber, -1, false)) {
+                        saber->destroyObjectFromDatabase(true);
+                    }
+                    break;
+                } else {
+                    error("could not create training saber: " + saberTpl);
+                }
+            }
+        }
+    }
+}
+// === End Jedi-start patch
 
-			// 2) Novice Lightsaber
-			sm->awardSkill("force_discipline_light_saber_novice", playerCreature, false, true, true);
-
-			// 3) Optional title line (Padawan)
-			sm->awardSkill("force_title_jedi_novice", playerCreature, false, true, true);
-
-			// 4) Training lightsaber into inventory
-			SceneObject* inventory = playerCreature->getSlottedObject("inventory");
-			if (inventory != nullptr) {
-				// Prefer the non-player-crafted generic training saber; fall back to crafted training saber
-				const String saberTpls[] = {
-					"object/weapon/melee/sword/crafted_saber/generic_sword_lightsaber_training.iff",
-					"object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff"
-				};
-
-				for (int i = 0; i < 2; ++i) {
-					const String& saberTpl = saberTpls[i];
-					ManagedReference<SceneObject*> saber = nullptr;
-					try {
-						saber = zoneServer->createObject(saberTpl.hashCode(), 1);
-					} catch (Exception& e) {
-						error(e.getMessage());
-					}
-					if (saber != nullptr) {
-						if (!inventory->transferObject(saber, -1, false)) {
-							saber->destroyObjectFromDatabase(true);
-						}
-						break;
-					} else {
-						error("could not create training saber: " + saberTpl);
-					}
-				}
-			}
-		}
-	}
-	// === End Jedi-start patch ===
 
 	addCustomization(playerCreature, customization, playerTemplate->getAppearanceFilename());
 	addHair(playerCreature, hairTemplate, hairCustomization);
