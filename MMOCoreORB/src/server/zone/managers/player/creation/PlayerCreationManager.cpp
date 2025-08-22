@@ -386,20 +386,16 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 	playerCreature->setClient(client);
 
 	// === SWGReturns PATCH BEGIN: Jedi at start (FS Novice + Lightsaber Novice + training saber) ===
-	// If the chosen profession is "jedi" (or any profession string containing "jedi" or "force_"),
-	// grant the base Jedi skills and drop a training lightsaber into inventory so they can play immediately.
-	if (profession.contains("jedi") || profession.contains("force_")) {
+	if (profession.contains("jedi") || profession.contains("force_") || profession == "jedi_padawan") {
 		auto* sm = SkillManager::instance();
 
-		// 1) Make the character Force-Sensitive (Novice)
-		sm->awardSkill("force_sensitive_novice",
-		               playerCreature, /*notify*/false, /*awardRequired*/true, /*noXpRequired*/true);
+		// 1) Force-Sensitive Novice
+		sm->awardSkill("force_sensitive_novice", playerCreature, false, true, true);
 
-		// 2) Give Novice Lightsaber so they can equip/use sabers immediately
-		sm->awardSkill("force_discipline_light_saber_novice",
-		               playerCreature, /*notify*/false, /*awardRequired*/true, /*noXpRequired*/true);
+		// 2) Novice Lightsaber
+		sm->awardSkill("force_discipline_light_saber_novice", playerCreature, false, true, true);
 
-		// 3) Put a training lightsaber in inventory
+		// 3) Training lightsaber into inventory
 		SceneObject* inventory = playerCreature->getSlottedObject("inventory");
 		if (inventory != nullptr) {
 			const String saberTpl = "object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff";
@@ -417,8 +413,6 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 				error("could not create training saber: " + saberTpl);
 			}
 		}
-		// (Optional) Title/Rank at start if you used this previously:
-		// sm->awardSkill("force_title_jedi_rank_02", playerCreature, false, true, true);
 	}
 	// === SWGReturns PATCH END ===
 
@@ -579,28 +573,38 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 
 	JediManager::instance()->onPlayerCreated(playerCreature);
 
-	// Welcome Mail
-	chatManager->sendMail("The Hunted", "Welcome", "Welcome to The Hunted, This is a single player focused fun server with lots of quality of life improvements.\n\tFor a list of the changes please visit the SWGEmu forum post for The Hunted in SWGEmu based server listing section. If you have any questions/comments/concerns/suggestions please join the discord or send an email to linuxstormosv@gmail.com.\nThanks,\nBennji", playerCreature->getFirstName());
+	// === SWGReturns PATCH: Welcome Mail (edit strings below as you like) ===
+	{
+const String mailSender   = "SWGReturns";
+const String mailSubject  = "Welcome to SWGReturns";
+const String mailBody     = "Welcome to SWGReturns!\\n"
+    "\\n"
+    "• Visit our Discord for support and updates.\\n"
+    "\\n"
+    "Have fun, and may the Force be with you!\\n"
+    "\\n"
+    "— SWGReturns Team";
+chatManager->sendMail(mailSender, mailSubject, mailBody, playerCreature->getFirstName());
 
-	// Schedule Task to send out JTL Recruitment Mail
-	SendJtlRecruitment* jtlMailTask = new SendJtlRecruitment(playerCreature);
-
-	if (jtlMailTask != nullptr) {
-		jtlMailTask->schedule(10000);
 	}
+	// (Optional) JTL recruitment mail task — keep/remove per your design:
+	// SendJtlRecruitment* jtlMailTask = new SendJtlRecruitment(playerCreature);
+	// if (jtlMailTask != nullptr) jtlMailTask->schedule(10000);
+	// === End Mail Patch ===
 
 	//Join auction chat room
-	ghost->addChatRoom(chatManager->getAuctionRoom()->getRoomID());
+	ManagedReference<PlayerObject*> ghost2 = playerCreature->getPlayerObject();
+	ghost2->addChatRoom(chatManager->getAuctionRoom()->getRoomID());
 
 	ManagedReference<SuiMessageBox*> box = new SuiMessageBox(playerCreature, SuiWindowType::NONE);
-	box->setPromptTitle("Welcome");
-	box->setPromptText("Welcome to The Hunted! \nDon't forget to migrate your stats! Stats can also be migrated in Image Designer tents. Have fun!");
+box->setPromptTitle("Welcome");
+box->setPromptText("Welcome to SWGReturns!\\nBe sure to read check Discord for patch notes or ask for help!");
 	String playerName = playerCreature->getFirstName();
 	StringBuffer zBroadcast;
-	zBroadcast << "\\#00ace6" << playerName << " \\#ffb90f Has Joined The Hunted!";
+	zBroadcast << "\\#00ace6" << playerName << " \\#ffb90f has joined SWGReturns!";
 	playerCreature->getZoneServer()->getChatManager()->broadcastGalaxy(NULL, zBroadcast.toString());
 
-	ghost->addSuiBox(box);
+	ghost2->addSuiBox(box);
 	playerCreature->sendMessage(box->generateMessage());
 
 	return true;
@@ -673,8 +677,6 @@ void PlayerCreationManager::addStartingItems(CreatureObject* creature,
 	for (int i = 0; i < items->size(); ++i) {
 		String itemTemplate = items->get(i);
 
-		//instance()->info("Add Starting Items: " + itemTemplate, true);
-
 		ManagedReference<SceneObject*> item = zoneServer->createObject(
 				itemTemplate.hashCode(), 1);
 
@@ -720,7 +722,6 @@ void PlayerCreationManager::addProfessionStartingItems(CreatureObject* creature,
 		professionData = professionDefaultsInfo.get(0);
 
 	auto startingSkill = professionData->getSkill();
-	//Reference<Skill*> startingSkill = SkillManager::instance()->getSkill("crafting_artisan_novice");
 
 	//Starting skill.
 	SkillManager::instance()->awardSkill(startingSkill->getSkillName(),
@@ -742,8 +743,6 @@ void PlayerCreationManager::addProfessionStartingItems(CreatureObject* creature,
 
 	for (int i = 0; i < itemTemplates->size(); ++i) {
 		String itemTemplate = itemTemplates->get(i);
-
-		//instance()->info("Add Profession Starting Items: " + itemTemplate, true);
 
 		ManagedReference<SceneObject*> item;
 
@@ -812,15 +811,6 @@ void PlayerCreationManager::addHair(CreatureObject* creature,
 		return;
 	}
 
-	/*if (hairAssetData->getServerPlayerTemplate()
-			!= creature->getObjectTemplate()->getFullTemplateString()) {
-		error(
-				"hair " + hairTemplate
-						+ " is not compatible with this creature player "
-						+ creature->getObjectTemplate()->getFullTemplateString());
-		return;
-	}*/
-
 	if (!hairAssetData->isAvailableAtCreation()) {
 		error("hair " + hairTemplate + " not available at creation");
 		return;
@@ -862,7 +852,6 @@ void PlayerCreationManager::addHair(CreatureObject* creature,
 
 void PlayerCreationManager::addCustomization(CreatureObject* creature,
 		const String& customizationString, const String& appearanceFilename) const {
-	//TODO: Validate customizationString
 	CustomizationVariables data;
 
 	data.parseFromClientString(customizationString);
@@ -953,8 +942,6 @@ void PlayerCreationManager::addStartingWeaponsInto(CreatureObject* creature,
 		SceneObject* container) const {
 	if (creature == nullptr || container == nullptr || !creature->isPlayerCreature())
 		return;
-
-//	container = creature->getSlottedObject("inventory");
 
 	PlayerCreatureTemplate* playerTemplate =
 			dynamic_cast<PlayerCreatureTemplate*>(creature->getObjectTemplate());
