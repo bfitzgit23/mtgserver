@@ -36,8 +36,9 @@ PlayerCreationManager::PlayerCreationManager() : Logger("PlayerCreationManager")
 	professionDefaultsInfo.setNoDuplicateInsertPlan();
 	hairStyleInfo.setNoDuplicateInsertPlan();
 
-	startingCash = 100;
-	startingBank = 1000;
+	// SWGReturns: match Core3 defaults
+	startingCash = 10000;
+	startingBank = 10000;
 
 	freeGodMode = false;
 
@@ -50,6 +51,10 @@ PlayerCreationManager::PlayerCreationManager() : Logger("PlayerCreationManager")
 
 PlayerCreationManager::~PlayerCreationManager() {
 }
+
+// ================================================================
+//  Load racial data
+// ================================================================
 
 void PlayerCreationManager::loadRacialCreationData() {
 	TemplateManager* templateManager = TemplateManager::instance();
@@ -109,6 +114,10 @@ void PlayerCreationManager::loadRacialCreationData() {
 	info() << "Loaded " << racialCreationData.size() << " playable species.";
 }
 
+// ================================================================
+//  Load profession defaults
+// ================================================================
+
 void PlayerCreationManager::loadProfessionDefaultsInfo() {
 	TemplateManager* templateManager = TemplateManager::instance();
 	IffStream* iffStream = templateManager->openIffFile("creation/profession_defaults.iff");
@@ -161,7 +170,6 @@ void PlayerCreationManager::loadProfessionDefaultsInfo() {
 		String key;
 		row->getValue(0, key);
 
-		// Check if the professionInfo for this exists.
 		Reference<ProfessionDefaultsInfo*> pdi = professionDefaultsInfo.get(key);
 
 		if (pdi == nullptr)
@@ -176,6 +184,10 @@ void PlayerCreationManager::loadProfessionDefaultsInfo() {
 
 	info() << "Loaded " << professionDefaultsInfo.size() << " creation professions.";
 }
+
+// ================================================================
+//  Load default items
+// ================================================================
 
 void PlayerCreationManager::loadDefaultCharacterItems() {
 	IffStream* iffStream = TemplateManager::instance()->openIffFile(
@@ -220,7 +232,6 @@ void PlayerCreationManager::loadDefaultCharacterItems() {
 
 	delete iffStream;
 }
-
 void PlayerCreationManager::loadHairStyleInfo() {
 	IffStream* iffStream = TemplateManager::instance()->openIffFile("creation/default_pc_hairstyles.iff");
 
@@ -361,8 +372,7 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 	String profession, customization, hairTemplate, hairCustomization;
 	callback->getSkill(profession);
 
-	if (profession.contains("jedi"))
-		profession = "crafting_artisan";
+	// SWGReturns: DO NOT remap Jedi to artisan (removed MTG guard)
 
 	callback->getCustomizationString(customization);
 	callback->getHairObject(hairTemplate);
@@ -426,6 +436,16 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 		addStartingItems(playerCreature, clientTemplate, true);
 		addRacialMods(playerCreature, fileName, &playerTemplate->getStartingSkills(), &playerTemplate->getStartingItems(), true);
 	}
+
+	// SWGReturns: Enable Jedi-at-start (no village/unlock)
+	if (profession.contains("jedi")) {
+		if (ghost != nullptr) {
+			ghost->setJediState(2);
+			ghost->addHologrindProfession(0);
+			SkillManager::instance()->awardSkill("force_title_jedi_rank_02", playerCreature, false, true, true);
+		}
+	}
+	// end SWGReturns patch
 
 	if (ghost != nullptr) {
 		int accID = client->getAccountID();
@@ -550,33 +570,37 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 
 	JediManager::instance()->onPlayerCreated(playerCreature);
 
-	// Welcome Mail
-	chatManager->sendMail("The Hunted", "Welcome", "Welcome to The Hunted, This is a single player focused fun server with lots of quality of life improvements.\n	For a list of the changes please visit the SWGEmu forum post for The Hunted in SWGEmu based server listing section. If you have any questions/comments/concerns/suggestions please join the discord or send an email to linuxstormosv@gmail.com.\nThanks,\nBennji", playerCreature->getFirstName());
+// Welcome Mail
+chatManager->sendMail("SWGReturns", "Welcome", 
+  "Welcome to SWGReturns! This is a Pre-CU focused server with custom features and quality of life improvements.\n"
+  "For patch notes, server updates, and community info please visit our forums or Discord.\n"
+  "Enjoy your adventure, and may the Force be with you!",
+  playerCreature->getFirstName());
 
-	// Schedule Task to send out JTL Recruitment Mail
-	SendJtlRecruitment* jtlMailTask = new SendJtlRecruitment(playerCreature);
+// Schedule Task to send out JTL Recruitment Mail
+SendJtlRecruitment* jtlMailTask = new SendJtlRecruitment(playerCreature);
 
-	if (jtlMailTask != nullptr) {
-		jtlMailTask->schedule(10000);
-	}
+if (jtlMailTask != nullptr) {
+    jtlMailTask->schedule(10000);
+}
 
-	//Join auction chat room
-	ghost->addChatRoom(chatManager->getAuctionRoom()->getRoomID());
+//Join auction chat room
+ghost->addChatRoom(chatManager->getAuctionRoom()->getRoomID());
 
-	ManagedReference<SuiMessageBox*> box = new SuiMessageBox(playerCreature, SuiWindowType::NONE);
-	box->setPromptTitle("Welcome");
-	box->setPromptText("Welcome to The Hunted! \nDon't forget to migrate your stats! Stats can also be migrated in Image Designer tents. Have fun!");
-	String playerName = playerCreature->getFirstName();
-	StringBuffer zBroadcast;
-	zBroadcast << "\\#00ace6" << playerName << " \\#ffb90f Has Joined The Hunted!";
-	playerCreature->getZoneServer()->getChatManager()->broadcastGalaxy(NULL, zBroadcast.toString());
+ManagedReference<SuiMessageBox*> box = new SuiMessageBox(playerCreature, SuiWindowType::NONE);
+box->setPromptTitle("Welcome to SWGReturns");
+box->setPromptText("Welcome to SWGReturns!\nExplore, build, and have fun. Check /help for basic commands.");
+String playerName = playerCreature->getFirstName();
+StringBuffer zBroadcast;
+zBroadcast << "\\#00ace6" << playerName << " \\#ffb90f Has joined SWGReturns!";
+playerCreature->getZoneServer()->getChatManager()->broadcastGalaxy(NULL, zBroadcast.toString());
 
-	ghost->addSuiBox(box);
-	playerCreature->sendMessage(box->generateMessage());
+ghost->addSuiBox(box);
+playerCreature->sendMessage(box->generateMessage());
+
 
 	return true;
 }
-
 int PlayerCreationManager::getMaximumAttributeLimit(const String& race,
 		int attributeNumber) const {
 	String maleRace = race + "_male";
@@ -764,7 +788,6 @@ void PlayerCreationManager::addProfessionStartingItems(CreatureObject* creature,
 		}
 	}
 }
-
 void PlayerCreationManager::addHair(CreatureObject* creature,
 		const String& hairTemplate, const String& hairCustomization) const {
 	if (hairTemplate.isEmpty())
