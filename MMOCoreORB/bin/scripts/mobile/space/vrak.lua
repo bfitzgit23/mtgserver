@@ -26,7 +26,7 @@ vrak = Creature:new {
 	optionsBitmask = AIENABLED + JTLINTERESTING,
 	diet = HERBIVORE,
 
-	templates = {"object/mobile/dressed_nym_destroyer_rod_m.iff"},
+	templates = {"object/mobile/dressed_nym_destroyer_rod_m.iff"},		
 	lootGroups = {},
 
 	-- Primary and secondary weapon should be different types (rifle/carbine, carbine/pistol, rifle/unarmed, etc)

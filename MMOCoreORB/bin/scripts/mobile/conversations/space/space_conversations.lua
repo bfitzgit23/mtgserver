@@ -26,6 +26,7 @@ includeFile("conversations/space/rebel/j_pai_brek_convo.lua")
 
 -- Imperial
 includeFile("conversations/space/imperial/imperial_broker_convo.lua")
+includeFile("conversations/space/imperial/hakasshaSireenConvo.lua")
 
 
 -- Greeters
