@@ -392,7 +392,8 @@ bool SkillManager::awardSkill(const String& skillName, CreatureObject* creature,
 
 			totalSkillPointsWasted -= skill->getSkillPointsRequired();
 		}
-
+		
+		
 		if (ghost->getSkillPoints() != totalSkillPointsWasted) {
 			creature->error("skill points mismatch calculated: " + String::valueOf(totalSkillPointsWasted) + " found: " + String::valueOf(ghost->getSkillPoints()));
 			ghost->setSkillPoints(totalSkillPointsWasted);
@@ -745,6 +746,23 @@ void SkillManager::awardDraftSchematics(Skill* skill, PlayerObject* ghost, bool 
 		SchematicMap::instance()->addSchematics(ghost, *schematicsGranted, notifyClient);
 	}
 }
+
+	if (skill->getSkillName() == "force_rank_dark_rank_05" || creature->hasSkill("force_rank_dark_rank_05")) {
+		awardSkill("force_title_jedi_rank_04", creature, true, true, true);
+
+	}
+	if (skill->getSkillName() == "force_rank_light_rank_05" || creature->hasSkill("force_rank_light_rank_05")) {
+		awardSkill("force_title_jedi_rank_04", creature, true, true, true);
+
+	}
+	if (skill->getSkillName() == "force_rank_dark_rank_10" || creature->hasSkill("force_rank_dark_rank_10")) {
+		awardSkill("force_title_jedi_master", creature, true, true, true);
+
+	}
+	if (skill->getSkillName() == "force_rank_light_rank_10" || creature->hasSkill("force_rank_light_rank_10")) {
+		awardSkill("force_title_jedi_master", creature, true, true, true);
+
+	}
 
 void SkillManager::updateXpLimits(PlayerObject* ghost) {
 	if (ghost == nullptr || !ghost->isPlayerObject()) {
