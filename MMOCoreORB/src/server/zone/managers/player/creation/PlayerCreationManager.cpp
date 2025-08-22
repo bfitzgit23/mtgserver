@@ -1,7 +1,4 @@
-/*
-				Copyright <SWGEmu>
-		See file COPYING for copying conditions.
-*/
+/* 				Copyright <SWGEmu> 		See file COPYING for copying conditions. */
 
 #include "server/db/ServerDatabase.h"
 #include "PlayerCreationManager.h"
@@ -36,7 +33,6 @@ PlayerCreationManager::PlayerCreationManager() : Logger("PlayerCreationManager")
 	professionDefaultsInfo.setNoDuplicateInsertPlan();
 	hairStyleInfo.setNoDuplicateInsertPlan();
 
-	// SWGReturns: match Core3 defaults
 	startingCash = 10000;
 	startingBank = 10000;
 
@@ -51,10 +47,6 @@ PlayerCreationManager::PlayerCreationManager() : Logger("PlayerCreationManager")
 
 PlayerCreationManager::~PlayerCreationManager() {
 }
-
-// ================================================================
-//  Load racial data
-// ================================================================
 
 void PlayerCreationManager::loadRacialCreationData() {
 	TemplateManager* templateManager = TemplateManager::instance();
@@ -114,10 +106,6 @@ void PlayerCreationManager::loadRacialCreationData() {
 	info() << "Loaded " << racialCreationData.size() << " playable species.";
 }
 
-// ================================================================
-//  Load profession defaults
-// ================================================================
-
 void PlayerCreationManager::loadProfessionDefaultsInfo() {
 	TemplateManager* templateManager = TemplateManager::instance();
 	IffStream* iffStream = templateManager->openIffFile("creation/profession_defaults.iff");
@@ -170,6 +158,7 @@ void PlayerCreationManager::loadProfessionDefaultsInfo() {
 		String key;
 		row->getValue(0, key);
 
+		// Check if the professionInfo for this exists.
 		Reference<ProfessionDefaultsInfo*> pdi = professionDefaultsInfo.get(key);
 
 		if (pdi == nullptr)
@@ -184,10 +173,6 @@ void PlayerCreationManager::loadProfessionDefaultsInfo() {
 
 	info() << "Loaded " << professionDefaultsInfo.size() << " creation professions.";
 }
-
-// ================================================================
-//  Load default items
-// ================================================================
 
 void PlayerCreationManager::loadDefaultCharacterItems() {
 	IffStream* iffStream = TemplateManager::instance()->openIffFile(
@@ -232,6 +217,7 @@ void PlayerCreationManager::loadDefaultCharacterItems() {
 
 	delete iffStream;
 }
+
 void PlayerCreationManager::loadHairStyleInfo() {
 	IffStream* iffStream = TemplateManager::instance()->openIffFile("creation/default_pc_hairstyles.iff");
 
@@ -370,11 +356,7 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 		raceData = racialCreationData.get(0); //Just get the first race, since they tried to create a race that doesn't exist.
 
 	String profession, customization, hairTemplate, hairCustomization;
-	callback->getSkill(profession);
-
-	// SWGReturns: DO NOT remap Jedi to artisan (removed MTG guard)
-
-	callback->getCustomizationString(customization);
+	callback->getSkill(profession); callback->getCustomizationString(customization);
 	callback->getHairObject(hairTemplate);
 	callback->getHairCustomization(hairCustomization);
 
@@ -402,6 +384,43 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 
 	client->setPlayer(playerCreature);
 	playerCreature->setClient(client);
+
+	// === SWGReturns PATCH BEGIN: Jedi at start (FS Novice + Lightsaber Novice + training saber) ===
+	// If the chosen profession is "jedi" (or any profession string containing "jedi" or "force_"),
+	// grant the base Jedi skills and drop a training lightsaber into inventory so they can play immediately.
+	if (profession.contains("jedi") || profession.contains("force_")) {
+		auto* sm = SkillManager::instance();
+
+		// 1) Make the character Force-Sensitive (Novice)
+		sm->awardSkill("force_sensitive_novice",
+		               playerCreature, /*notify*/false, /*awardRequired*/true, /*noXpRequired*/true);
+
+		// 2) Give Novice Lightsaber so they can equip/use sabers immediately
+		sm->awardSkill("force_discipline_light_saber_novice",
+		               playerCreature, /*notify*/false, /*awardRequired*/true, /*noXpRequired*/true);
+
+		// 3) Put a training lightsaber in inventory
+		SceneObject* inventory = playerCreature->getSlottedObject("inventory");
+		if (inventory != nullptr) {
+			const String saberTpl = "object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff";
+			ManagedReference<SceneObject*> saber = nullptr;
+			try {
+				saber = zoneServer->createObject(saberTpl.hashCode(), 1);
+			} catch (Exception& e) {
+				error(e.getMessage());
+			}
+			if (saber != nullptr) {
+				if (!inventory->transferObject(saber, -1, false)) {
+					saber->destroyObjectFromDatabase(true);
+				}
+			} else {
+				error("could not create training saber: " + saberTpl);
+			}
+		}
+		// (Optional) Title/Rank at start if you used this previously:
+		// sm->awardSkill("force_title_jedi_rank_02", playerCreature, false, true, true);
+	}
+	// === SWGReturns PATCH END ===
 
 	// Set starting cash and starting bank
 	playerCreature->clearCashCredits(false);
@@ -436,16 +455,6 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 		addStartingItems(playerCreature, clientTemplate, true);
 		addRacialMods(playerCreature, fileName, &playerTemplate->getStartingSkills(), &playerTemplate->getStartingItems(), true);
 	}
-
-	// SWGReturns: Enable Jedi-at-start (no village/unlock)
-	if (profession.contains("jedi")) {
-		if (ghost != nullptr) {
-			ghost->setJediState(2);
-			ghost->addHologrindProfession(0);
-			SkillManager::instance()->awardSkill("force_title_jedi_rank_02", playerCreature, false, true, true);
-		}
-	}
-	// end SWGReturns patch
 
 	if (ghost != nullptr) {
 		int accID = client->getAccountID();
@@ -555,7 +564,7 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 				<< "INSERT INTO `characters_dirty` (`character_oid`, `account_id`, `galaxy_id`, `firstname`, `surname`, `race`, `gender`, `template`)"
 				<< " VALUES (" << playerCreature->getObjectID() << ","
 				<< client->getAccountID() << "," << zoneServer.get()->getGalaxyID()
-				<< "," << "'" << firstName.escapeString() << "','"
+				<< "," << "'" << firstName.escapeString() << "','" 
 				<< lastName.escapeString() << "'," << raceID << "," << 0 << ",'"
 				<< raceFile.escapeString() << "')";
 
@@ -570,37 +579,33 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 
 	JediManager::instance()->onPlayerCreated(playerCreature);
 
-// Welcome Mail
-chatManager->sendMail("SWGReturns", "Welcome", 
-  "Welcome to SWGReturns! This is a Pre-CU focused server with custom features and quality of life improvements.\n"
-  "For patch notes, server updates, and community info please visit our forums or Discord.\n"
-  "Enjoy your adventure, and may the Force be with you!",
-  playerCreature->getFirstName());
+	// Welcome Mail
+	chatManager->sendMail("The Hunted", "Welcome", "Welcome to The Hunted, This is a single player focused fun server with lots of quality of life improvements.\n\tFor a list of the changes please visit the SWGEmu forum post for The Hunted in SWGEmu based server listing section. If you have any questions/comments/concerns/suggestions please join the discord or send an email to linuxstormosv@gmail.com.\nThanks,\nBennji", playerCreature->getFirstName());
 
-// Schedule Task to send out JTL Recruitment Mail
-SendJtlRecruitment* jtlMailTask = new SendJtlRecruitment(playerCreature);
+	// Schedule Task to send out JTL Recruitment Mail
+	SendJtlRecruitment* jtlMailTask = new SendJtlRecruitment(playerCreature);
 
-if (jtlMailTask != nullptr) {
-    jtlMailTask->schedule(10000);
-}
+	if (jtlMailTask != nullptr) {
+		jtlMailTask->schedule(10000);
+	}
 
-//Join auction chat room
-ghost->addChatRoom(chatManager->getAuctionRoom()->getRoomID());
+	//Join auction chat room
+	ghost->addChatRoom(chatManager->getAuctionRoom()->getRoomID());
 
-ManagedReference<SuiMessageBox*> box = new SuiMessageBox(playerCreature, SuiWindowType::NONE);
-box->setPromptTitle("Welcome to SWGReturns");
-box->setPromptText("Welcome to SWGReturns!\nExplore, build, and have fun. Check /help for basic commands.");
-String playerName = playerCreature->getFirstName();
-StringBuffer zBroadcast;
-zBroadcast << "\\#00ace6" << playerName << " \\#ffb90f Has joined SWGReturns!";
-playerCreature->getZoneServer()->getChatManager()->broadcastGalaxy(NULL, zBroadcast.toString());
+	ManagedReference<SuiMessageBox*> box = new SuiMessageBox(playerCreature, SuiWindowType::NONE);
+	box->setPromptTitle("Welcome");
+	box->setPromptText("Welcome to The Hunted! \nDon't forget to migrate your stats! Stats can also be migrated in Image Designer tents. Have fun!");
+	String playerName = playerCreature->getFirstName();
+	StringBuffer zBroadcast;
+	zBroadcast << "\\#00ace6" << playerName << " \\#ffb90f Has Joined The Hunted!";
+	playerCreature->getZoneServer()->getChatManager()->broadcastGalaxy(NULL, zBroadcast.toString());
 
-ghost->addSuiBox(box);
-playerCreature->sendMessage(box->generateMessage());
-
+	ghost->addSuiBox(box);
+	playerCreature->sendMessage(box->generateMessage());
 
 	return true;
 }
+
 int PlayerCreationManager::getMaximumAttributeLimit(const String& race,
 		int attributeNumber) const {
 	String maleRace = race + "_male";
@@ -788,6 +793,7 @@ void PlayerCreationManager::addProfessionStartingItems(CreatureObject* creature,
 		}
 	}
 }
+
 void PlayerCreationManager::addHair(CreatureObject* creature,
 		const String& hairTemplate, const String& hairCustomization) const {
 	if (hairTemplate.isEmpty())
@@ -941,7 +947,6 @@ void PlayerCreationManager::addStartingItemsInto(CreatureObject* creature,
 			item->destroyObjectFromDatabase(true);
 		}
 	}
-
 }
 
 void PlayerCreationManager::addStartingWeaponsInto(CreatureObject* creature,
@@ -974,7 +979,6 @@ void PlayerCreationManager::addStartingWeaponsInto(CreatureObject* creature,
 	if (professionData == nullptr)
 		professionData = professionDefaultsInfo.get(0);
 
-
 	//Add common starting items.
 	for (int itemNumber = 0; itemNumber < commonStartingItems.size();
 			itemNumber++) {
@@ -990,7 +994,6 @@ void PlayerCreationManager::addStartingWeaponsInto(CreatureObject* creature,
 			item->destroyObjectFromDatabase(true);
 		}
 	}
-
 
 	//Add profession specific items.
 	for (int itemNumber = 0;
@@ -1009,7 +1012,6 @@ void PlayerCreationManager::addStartingWeaponsInto(CreatureObject* creature,
 			item->destroyObjectFromDatabase(true);
 		}
 	}
-
 
 	//Add race specific items.
 	const Vector<String>& startingItems = playerTemplate->getStartingItems();
