@@ -487,11 +487,11 @@ void FrsManagerImplementation::validatePlayerData(CreatureObject* player, bool v
 
 	verifyRoomAccess(player, realPlayerRank);
 
-	if (realPlayerRank >= 0 && (councilType == COUNCIL_LIGHT || councilType == COUNCIL_DARK)) {
-		if (councilType == COUNCIL_LIGHT && player->getFaction() != Factions::FACTIONREBEL)
-			player->setFaction(Factions::FACTIONREBEL);
-		else if (councilType == COUNCIL_DARK && player->getFaction() != Factions::FACTIONIMPERIAL)
-			player->setFaction(Factions::FACTIONIMPERIAL);
+	//if (realPlayerRank >= 0 && (councilType == COUNCIL_LIGHT || councilType == COUNCIL_DARK)) {
+	//	if (councilType == COUNCIL_LIGHT && player->getFaction() != Factions::FACTIONREBEL)
+	//		player->setFaction(Factions::FACTIONREBEL);
+	//	else if (councilType == COUNCIL_DARK && player->getFaction() != Factions::FACTIONIMPERIAL)
+	//		player->setFaction(Factions::FACTIONIMPERIAL);
 
 		//if (player->getFactionStatus() != FactionStatus::OVERT)
 			//player->setFactionStatus(FactionStatus::OVERT);
