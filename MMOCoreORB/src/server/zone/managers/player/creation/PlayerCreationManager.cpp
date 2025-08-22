@@ -385,7 +385,7 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 	client->setPlayer(playerCreature);
 	playerCreature->setClient(client);
 
-	// (Jedi-start skill grant moved below, after ghost is available)
+	// (Jedi-start skill grant happens AFTER ghost is available)
 
 	// Set starting cash and starting bank
 	playerCreature->clearCashCredits(false);
@@ -408,14 +408,12 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 		ghost->setStarterProfession(profession);
 	}
 
-	// === SWGReturns PATCH (updated): ensure Jedi prereqs are satisfied, then award FS/Lightsaber novice ===
+	// === SWGReturns PATCH (finalized): Jedi-start full kit & title ===
 	{
 		const bool isJediStart = profession.contains("jedi") || profession.contains("force_") || profession == "jedi_padawan";
 		if (isJediStart && ghost != nullptr) {
-			// Bump JediState so SkillManager/JediManager prereq checks pass on MTG
-			// Pick a safe value that clears canLearnSkill for novice boxes in your fork.
-			// (4 is a common “Padawan/Adept”-ish threshold; adjust if your repo differs.)
-			ghost->setJediState(4);
+			// Ensure prereqs (Jedi state) are satisfied for novice awards
+			ghost->setJediState(4); // adjust if your repo uses a different threshold
 
 			auto* sm = SkillManager::instance();
 
@@ -425,9 +423,11 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 			// 2) Novice Lightsaber
 			sm->awardSkill("force_discipline_light_saber_novice", playerCreature, false, true, true);
 
-			// 3) Training lightsaber into inventory
-			SceneObject* inventory = playerCreature->getSlottedObject("inventory");
-			if (inventory != nullptr) {
+			// 3) Optional title line (Padawan)
+			sm->awardSkill("force_title_jedi_novice", playerCreature, false, true, true);
+
+			// 4) Training lightsaber into inventory
+			if (SceneObject* inventory = playerCreature->getSlottedObject("inventory")) {
 				const String saberTpl = "object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff";
 				ManagedReference<SceneObject*> saber = nullptr;
 				try {
@@ -442,10 +442,32 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 				} else {
 					error("could not create training saber: " + saberTpl);
 				}
+
+				// 5) Padawan robe (try a few likely templates, use first that creates)
+				const char* robeCandidates[] = {
+					"object/tangible/wearables/robe/robe_jedi_padawan.iff",
+					"object/tangible/wearables/robe/robe_padawan.iff",
+					"object/tangible/wearables/robe/robe_tunic_s01.iff",
+					"object/tangible/wearables/robe/robe_s01.iff"
+				};
+				for (auto& tpl : robeCandidates) {
+					ManagedReference<SceneObject*> robe = nullptr;
+					try {
+						robe = zoneServer->createObject(String(tpl).hashCode(), 1);
+					} catch (Exception& e) {
+						robe = nullptr;
+					}
+					if (robe != nullptr) {
+						if (!inventory->transferObject(robe, -1, false)) {
+							robe->destroyObjectFromDatabase(true);
+						}
+						break; // stop after first successful robe
+					}
+				}
 			}
 		}
 	}
-	// === End updated Jedi-start patch ===
+	// === End Jedi-start patch ===
 
 	addCustomization(playerCreature, customization, playerTemplate->getAppearanceFilename());
 	addHair(playerCreature, hairTemplate, hairCustomization);
