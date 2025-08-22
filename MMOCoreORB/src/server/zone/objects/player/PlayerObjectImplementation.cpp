@@ -1591,7 +1591,7 @@ void PlayerObjectImplementation::notifyOnline() {
 
 	schedulePvpTefRemovalTask();
 
-	playerCreature->sendExecuteConsoleCommand("/chatRoom join SWG.thehunted.General");
+	playerCreature->sendExecuteConsoleCommand("/chatRoom join SWG.Returns.General");
 
 	MissionManager* missionManager = zoneServer->getMissionManager();
 
