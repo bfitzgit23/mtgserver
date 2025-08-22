@@ -385,8 +385,6 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 	client->setPlayer(playerCreature);
 	playerCreature->setClient(client);
 
-	// (Jedi-start skill grant happens AFTER ghost is available)
-
 	// Set starting cash and starting bank
 	playerCreature->clearCashCredits(false);
 	playerCreature->clearBankCredits(false);
@@ -408,12 +406,12 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 		ghost->setStarterProfession(profession);
 	}
 
-	// === SWGReturns PATCH (finalized): Jedi-start full kit & title ===
+	// === SWGReturns PATCH: Jedi-start full kit (FS novice + Lightsaber novice + Jedi title + training saber) ===
 	{
 		const bool isJediStart = profession.contains("jedi") || profession.contains("force_") || profession == "jedi_padawan";
 		if (isJediStart && ghost != nullptr) {
-			// Ensure prereqs (Jedi state) are satisfied for novice awards
-			ghost->setJediState(4); // adjust if your repo uses a different threshold
+			// Lift Jedi gating so novice boxes can be learned at creation time
+			ghost->setJediState(4);
 
 			auto* sm = SkillManager::instance();
 
@@ -427,41 +425,29 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 			sm->awardSkill("force_title_jedi_novice", playerCreature, false, true, true);
 
 			// 4) Training lightsaber into inventory
-			if (SceneObject* inventory = playerCreature->getSlottedObject("inventory")) {
-				const String saberTpl = "object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff";
-				ManagedReference<SceneObject*> saber = nullptr;
-				try {
-					saber = zoneServer->createObject(saberTpl.hashCode(), 1);
-				} catch (Exception& e) {
-					error(e.getMessage());
-				}
-				if (saber != nullptr) {
-					if (!inventory->transferObject(saber, -1, false)) {
-						saber->destroyObjectFromDatabase(true);
-					}
-				} else {
-					error("could not create training saber: " + saberTpl);
-				}
-
-				// 5) Padawan robe (try a few likely templates, use first that creates)
-				const char* robeCandidates[] = {
-					"object/tangible/wearables/robe/robe_jedi_padawan.iff",
-					"object/tangible/wearables/robe/robe_padawan.iff",
-					"object/tangible/wearables/robe/robe_tunic_s01.iff",
-					"object/tangible/wearables/robe/robe_s01.iff"
+			SceneObject* inventory = playerCreature->getSlottedObject("inventory");
+			if (inventory != nullptr) {
+				// Prefer the non-player-crafted generic training saber; fall back to crafted training saber
+				const String saberTpls[] = {
+					"object/weapon/melee/sword/crafted_saber/generic_sword_lightsaber_training.iff",
+					"object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff"
 				};
-				for (auto& tpl : robeCandidates) {
-					ManagedReference<SceneObject*> robe = nullptr;
+
+				for (int i = 0; i < 2; ++i) {
+					const String& saberTpl = saberTpls[i];
+					ManagedReference<SceneObject*> saber = nullptr;
 					try {
-						robe = zoneServer->createObject(String(tpl).hashCode(), 1);
+						saber = zoneServer->createObject(saberTpl.hashCode(), 1);
 					} catch (Exception& e) {
-						robe = nullptr;
+						error(e.getMessage());
 					}
-					if (robe != nullptr) {
-						if (!inventory->transferObject(robe, -1, false)) {
-							robe->destroyObjectFromDatabase(true);
+					if (saber != nullptr) {
+						if (!inventory->transferObject(saber, -1, false)) {
+							saber->destroyObjectFromDatabase(true);
 						}
-						break; // stop after first successful robe
+						break;
+					} else {
+						error("could not create training saber: " + saberTpl);
 					}
 				}
 			}
