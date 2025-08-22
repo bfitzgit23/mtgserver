@@ -1,3 +1,363 @@
+Ben (stormos Dev)
+bennji1991
+Online
+
+Zubzy — 3:52 AM
+kk
+yea im look into the planets not showing on the terminals to ..iill send u patches for everything to try on ur vm
+Ben (stormos Dev)
+[GEN2]
+ — 3:54 AM
+ok
+https://drive.google.com/file/d/1V_FpzfOIf4_GHf61isiAQLCVAJR2b4g3/view?usp=drive_link
+Google Docs
+bin.zip
+Zubzy — 3:55 AM
+got it
+Zubzy — 4:03 AM
+im combing throught it now just bare with me
+Ben (stormos Dev)
+[GEN2]
+ — 4:03 AM
+ok
+Zubzy — 4:04 AM
+be a few alot to go throuhg
+Also did u get in-game mail when u created toon? I forgot to check that earlier
+Ben (stormos Dev)
+[GEN2]
+ — 4:07 AM
+yes
+Zubzy — 4:10 AM
+Coolio
+Found the issue with Jedi I'm working on it now
+Ben (stormos Dev)
+[GEN2]
+ — 4:10 AM
+ok
+im still able to do our CU when we get this done
+Zubzy — 4:13 AM
+After I get these patches up I may get a nap in and finish what ever is left after Drs appoojntment in morning
+Ben (stormos Dev)
+[GEN2]
+ — 4:15 AM
+ok
+ill probably too
+i noticed kass hoth mandalore coruscant and chandrila arent in this https://github.com/bfitzgit23/mtgserver/blob/update-wip/MMOCoreORB/bin/scripts/managers/planet/planet_manager.lua
+GitHub
+mtgserver/MMOCoreORB/bin/scripts/managers/planet/planet_manager.lua...
+Contribute to bfitzgit23/mtgserver development by creating an account on GitHub.
+Contribute to bfitzgit23/mtgserver development by creating an account on GitHub.
+Zubzy — 4:18 AM
+Attachment file type: archive
+SWGReturns_JediStart_Patch.zip
+10.09 KB
+ok im looking into it
+Ben (stormos Dev)
+[GEN2]
+ — 4:21 AM
+ok
+with that .cpp revamp /home/swgadmin/mtgserver/MMOCoreORB/src/server/zone/managers/player/PlayerCreationManager.cpp:4:10: fatal error:
+      'PlayerCreationManager.h' file not found
+#include "PlayerCreationManager.h"
+but i do have that .h
+Zubzy — 4:22 AM
+ok give me a few
+Ben (stormos Dev)
+[GEN2]
+ — 4:22 AM
+ok
+it went to the wrong dir it's supposed to go to /home/swgadmin/mtgserver/MMOCoreORB/src/server/zone/managers/player/creation
+Zubzy — 4:25 AM
+yea i was just bout to say that i just notced the dircetory was diffrent in zip
+Ben (stormos Dev)
+[GEN2]
+ — 4:25 AM
+ya
+i moved it it links now
+Zubzy — 4:27 AM
+Drop both files into a Lua path your server loads (e.g. alongside your other travel scripts).
+
+In your starport/shuttle terminal script, add:
+
+local TravelInit = require("custom_travel_init")
+-- adjust the method name if your terminal uses something else:
+-- "addPlanetDestination(planet, name, x, y, z)"
+TravelInit.register_all(self, "addPlanetDestination")
+
+
+Populate coordinates:
+
+Open custom_travel_destinations.lua and add entries like:
+
+Travel["kashyyyk"] = {
+  { name = "Kachirho Starport", x = 1234.0, y = 0.0, z = -567.0 },
+  { name = "Hunting Grounds Shuttle A", x = 222.0, y = 0.0, z = 333.0 },
+}
+
+
+Do this for every planet you want on the terminals. take a look at these files compare them to the mtg ones
+Attachment file type: archive
+travel_patch_zip.zip
+1.04 KB
+Ben (stormos Dev)
+[GEN2]
+ — 4:27 AM
+ok
+ya that looks right
+Zubzy — 4:30 AM
+scripts/managers/travel/travel_planets.lua
+
+scripts/managers/travel/travel_destinations.lua
+
+or the per-terminal Lua files (e.g. scripts/object/tangible/terminal/travel/*.lua) do u ahve these files .. so i can see if they have the points at all ifnot wwe will ahbe to add manually
+Ben (stormos Dev)
+[GEN2]
+ — 4:31 AM
+there is no travel folder
+Zubzy — 4:31 AM
+hmm ok one sec
+im bout to send u a command list that will allow u to teleport to planets till i can figure out the filght plans etc
+Ben (stormos Dev)
+[GEN2]
+ — 4:33 AM
+ok
+Zubzy — 4:33 AM
+Planet identifiers present in your planet folder
+
+Use these exact tokens with /setPlanet:
+
+tatooine
+
+naboo
+
+corellia
+
+talus
+
+rori
+
+dantooine
+
+dathomir
+
+endor
+
+yavin4
+
+lok
+
+tanaab
+
+mustafar
+
+kashyyyk
+
+Kashyyyk sub-zones (your pack includes them as separate “planets”):
+
+kashyyyk_dead_forest
+
+kashyyyk_hunting
+
+kashyyyk_rryatt_trail
+
+kashyyyk_north_dungeons
+
+kashyyyk_south_dungeons
+
+kashyyyk_pob_dungeons
+
+Extras in your pack:
+
+hoth
+
+mandalore
+
+chandrila
+
+kaas
+
+Quick examples
+
+Jump to Kashyyyk main map:
+/setPlanet kashyyyk 0 0 0
+
+Jump to Mustafar near origin:
+/setPlanet mustafar 1000 0 -1000
+
+Hop across the same world:
+/warp -2500 0 4200
+
+If any planet refuses to load from /setPlanet, that’s usually a missing/disabled entry in the server’s planet manager or the world not registered in travel/*.iff. But for quick testing, these commands are the fastest way to verify the world data is actually present and booting.
+Ben (stormos Dev)
+[GEN2]
+ — 4:34 AM
+ok
+Zubzy — 4:37 AM
+datatables/travel/travel_planets.iff
+
+datatables/travel/travel_points.iff
+
+datatables/travel/travel_paths.iff
+Ben (stormos Dev)
+[GEN2]
+ — 4:38 AM
+there's no travel folder in datatables in the tre
+Zubzy — 4:38 AM
+weird ok hold on
+Ben (stormos Dev)
+[GEN2]
+ — 4:38 AM
+and when i did that command to teleport to mustafar it crashed the game
+Zubzy — 4:39 AM
+hmmm ok
+hold on
+Ben (stormos Dev)
+[GEN2]
+ — 4:40 AM
+ok
+Zubzy — 4:41 AM
+di the jedi patch work
+Ben (stormos Dev)
+[GEN2]
+ — 4:42 AM
+checking
+Zubzy — 4:44 AM
+the crash may be do to load order
+in client on tres im looking into it
+Ben (stormos Dev)
+[GEN2]
+ — 4:45 AM
+ok
+Zubzy — 4:50 AM
+try this load order
+Attachment file type: unknown
+swgemu_live.cfg
+3.67 KB
+i dont have admin on my account so i cant check it on my end
+yea def the laod order
+all the planets r there
+in terminals
+that files worked
+Ben (stormos Dev)
+[GEN2]
+ — 4:52 AM
+ok
+Zubzy — 4:56 AM
+did the jedi fix work .. ima up laod the ne cf gile to server
+sho i dont have the ip info atm ill have to get back from u . unless u wanna upload it to the fullscan and update it
+Ben (stormos Dev)
+[GEN2]
+ — 4:57 AM
+15..204.254.253, almalinux, SWG007!!
+it goes in /var/www/html/tre
+Zubzy — 5:07 AM
+yea its in now
+Ben (stormos Dev)
+[GEN2]
+ — 5:07 AM
+ok
+Zubzy — 5:08 AM
+the jedi fixed worked?
+Ben (stormos Dev)
+[GEN2]
+ — 5:08 AM
+checking on my vm
+Zubzy — 5:09 AM
+oh ok
+Ben (stormos Dev)
+[GEN2]
+ — 5:12 AM
+now there's no starting jedi at all
+on my vm
+with that .cfg
+wait wrong client nvm
+Zubzy — 5:13 AM
+ok was bout to go deep diving again lol
+Ben (stormos Dev)
+[GEN2]
+ — 5:14 AM
+lol
+Zubzy — 5:14 AM
+u scare me sometimes lol
+Ben (stormos Dev)
+[GEN2]
+ — 5:14 AM
+lol
+Zubzy — 5:14 AM
+also wokring on fix for hotch ticket buyting from terminal ..need ot be tested thought before we push it live to make sure we can actually travel there
+Ben (stormos Dev)
+[GEN2]
+ — 5:15 AM
+well there's no jedi
+i was right
+it doesnt show on creation
+in my vm
+and i think it's due to skills_01.tre not being ontop
+but not sure
+or being where it is
+Zubzy — 5:18 AM
+ok im go at this at a diffrent angle . can u send me the original file from the original returns and the current one we r currently using ,,, if need be try mobving the siles on top but not move the rest ... i dont want it to over write any of th eplanet stuff
+Ben (stormos Dev)
+[GEN2]
+ — 5:18 AM
+what the tre? or the .cpp
+Zubzy — 5:18 AM
+send me the cpps but move the re up in the order and try
+Ben (stormos Dev)
+[GEN2]
+ — 5:18 AM
+ok
+Zubzy — 5:18 AM
+and holy crap all the species is working now
+Ben (stormos Dev)
+[GEN2]
+ — 5:18 AM
+ya
+Zubzy — 5:19 AM
+finx one bug and a new dfeature unlocks glorius
+Ben (stormos Dev)
+[GEN2]
+ — 5:19 AM
+ya
+https://github.com/bfitzgit23/mtgserver/blob/update-wip/MMOCoreORB/src/server/zone/managers/player/creation/PlayerCreationManager.cpp https://github.com/bfitzgit23/Returns-EMU/blob/main/MMOCoreORB/src/server/zone/managers/player/creation/PlayerCreationManager.cpp
+GitHub
+mtgserver/MMOCoreORB/src/server/zone/managers/player/creation/Playe...
+Contribute to bfitzgit23/mtgserver development by creating an account on GitHub.
+Contribute to bfitzgit23/mtgserver development by creating an account on GitHub.
+GitHub
+Returns-EMU/MMOCoreORB/src/server/zone/managers/player/creation/Pla...
+SWG Returns server code. Contribute to bfitzgit23/Returns-EMU development by creating an account on GitHub.
+SWG Returns server code. Contribute to bfitzgit23/Returns-EMU development by creating an account on GitHub.
+there's the files
+Zubzy — 5:20 AM
+Kk
+Ben (stormos Dev)
+[GEN2]
+ — 5:20 AM
+and im gonna leave the tre as is for now
+Zubzy — 5:21 AM
+Ok . I might crash for a lil and finish when I get back up if that's ok .. since server is working etc and fix some of game breaking stuff
+Ben (stormos Dev)
+[GEN2]
+ — 5:21 AM
+ya sure
+Zubzy — 5:21 AM
+So far it's working only thing now is the Jedi fix .. and I got a patch for the hoth travel I'll send that to u in a sec
+Ben (stormos Dev)
+[GEN2]
+ — 5:21 AM
+ya
+Zubzy — 5:25 AM
+--Copyright (C) 2007 <SWGEmu>
+
+--This File is part of Core3.
+
+--This program is free software; you can redistribute
+--it and/or modify it under the terms of the GNU Lesser
+Expand
+planet_manager.lua
+27 KB
+﻿
 --Copyright (C) 2007 <SWGEmu>
 
 --This File is part of Core3.
@@ -93,10 +453,6 @@ corellia = {
 	},
 
 	planetObjects = {
-		--{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = -0.664289, oz = 0, ow = 0.747476, x = -133.192, z = 28, y = -4711.16, parentid = 0},
-		--{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = 0.346712, oz = 0, ow = 0.937972, x = -5049.64, z = 21, y = -2304.52, parentid = 0},
-		--{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = 0.290803, oz = 0, ow = 0.956783, x = 3330.38, z = 308, y = 5517.14, parentid = 0},
-		--{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = -0.666281, oz = 0, ow = 0.745701, x = -136.437, z = 28, y = -4730.23, parentid = 0}
 	}
 }
 
@@ -132,8 +488,6 @@ dantooine = {
 	},
 
 	planetObjects = {
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = 0.695864, oz = 0, ow = 0.718174, x = 1585.68, z = 4, y = -6368.95, parentid = 0},
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = 0.725999, oz = 0, ow = -0.687696, x = -629.417, z = 3, y = 2481.24, parentid = 0}
 	}
 }
 
@@ -192,9 +546,6 @@ dathomir = {
 	},
 
 	planetObjects = {
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = 0.701463, oz = 0, ow = 0.712705, x = 592.612, z = 6, y = 3089.84, parentid = 0},
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = 0.314904, oz = 0, ow = 0.949123, x = -67.6585, z = 18, y = -1595.3, parentid = 0},
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = 0.314904, oz = 0, ow = 0.949123, x = 5289.6, z = 78.5, y = -4146.1, parentid = 0}
 	}
 }
 
@@ -243,8 +594,6 @@ endor = {
 	},
 
 	planetObjects = {
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = 0.932952, oz = 0, ow = -0.360002, x = -963.537, z = 73, y = 1556.86, parentid = 0},
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = 0.723459, oz = 0, ow = -0.690367, x = 3240.5, z = 24, y = -3484.79, parentid = 0},
 	}
 }
 
@@ -265,12 +614,10 @@ kashyyyk_main = {
 
 	planetTravelPoints = {
 		{name = "Kachirho Starport", x = -690.3, z = 20.4, y = -168, interplanetaryTravelAllowed = 1, incomingTravelAllowed = 1},
-
 	},
 
 	badgeAreas = {
 		--{"badge_kachirho",-690,-168,10,xx},
-
 	},
 
 	navAreas = {
@@ -279,7 +626,6 @@ kashyyyk_main = {
 	},
 
 	planetObjects = {
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = -0.705623, oz = 0, ow = 0.708587, x = -6917.18, z = 73, y = -5732.25, parentid = 0}
 	}
 }
 
@@ -335,7 +681,6 @@ lok = {
 	},
 
 	planetObjects = {
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = 0.999879, oz = 0, ow = 0.015506, x = 464.677, z = 8.75806, y = 5506.49, parentid = 0}
 	}
 }
 
@@ -355,8 +700,35 @@ mustafar = {
 	},
 
 	planetObjects = {
-		--{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = 0.715602, oz = 0, ow = -0.698509, x = 4824.53, z = 4.17, y = -4704.9, parentid = 0},
 	}]]
+}
+
+-- ======================
+-- NEW PLANET: HOTH
+-- ======================
+hoth = {
+	weatherEnabled = 1,
+	gcwEnabled = 0,
+
+	planetTravelPoints = {
+		-- Minimal working interplanetary point for ticketing
+		{name = "Echo Base Hangar", x = -3500, z = 0, y = -4200, interplanetaryTravelAllowed = 1, incomingTravelAllowed = 1, landingRange = 6},
+	},
+
+	-- Optional: set a JTL launch point if you use space for Hoth
+	-- jtlLaunchPoint = {"space_hoth", 0, 0, 0},
+
+	badgeAreas = {
+		--{"badge_echo_base",-3500,-4200,0,30,999},
+	},
+
+	navAreas = {
+		{"echo_base",-3500,-4200,100},
+	},
+
+	planetObjects = {
+		-- spawn terminals/NPCs via screenplay if desired
+	}
 }
 
 naboo = {
@@ -413,10 +785,6 @@ naboo = {
 	},
 
 	planetObjects = {
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = 0.715602, oz = 0, ow = -0.698509, x = 4824.53, z = 4.17, y = -4704.9, parentid = 0},
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = 0.309582, oz = 0, ow = 0.950873, x = -4876.99, z = 6, y = 4142.12, parentid = 0},
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = -0.0116238, oz = 0, ow = 0.999932, x = 5193.14, z = -192, y = 6680.25, parentid = 0},
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = -0.0116238, oz = 0, ow = -0.686427, x = 1445.8, z = 13, y = 2771.98, parentid = 0}
 	}
 }
 
@@ -491,9 +859,6 @@ rori = {
 	},
 
 	planetObjects = {
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = -0.100263, oz = 0, ow = 0.994961, x = -5307.37, z = 80.1274, y = -2216.91, parentid = 0},
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = -0.69192, oz = 0, ow = 0.721974, x = 5370.22, z = 80, y = 5666.04, parentid = 0},
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = -0.0274543, oz = 0, ow = 0.999623, x = 3672.91, z = 96, y = -6441.07, parentid = 0}
 	}
 }
 
@@ -574,8 +939,6 @@ talus = {
 	},
 
 	planetObjects = {
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = 0.996369, oz = 0, ow = -0.0851417, x = 4447.08, z = 2, y = 5286.96, parentid = 0},
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = 0.692641, oz = 0, ow = 0.721282, x = 329.666, z = 6, y = -2924.69, parentid = 0}
 	}
 }
 
@@ -640,10 +1003,6 @@ tatooine = {
 	},
 
 	planetObjects = {
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = 0.768226, oz = 0, ow = -0.640178, x = 3533.04, z = 5, y = -4796, parentid = 0},
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = -0.486657, oz = 0, ow = 0.873593, x = -1271.07, z = 12, y = -3590.22, parentid = 0},
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = -0.514176, oz = 0, ow = 0.857684, x = -2896.35, z = 5, y = 2130.87, parentid = 0},
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = 0.989124, oz = 0, ow = -0.147086, x = 1299.08, z = 7, y = 3145.21, parentid = 0}
 	}
 }
 
@@ -677,9 +1036,6 @@ yavin4 = {
 	},
 
 	planetObjects = {
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = -0.705623, oz = 0, ow = 0.708587, x = -6917.18, z = 73, y = -5732.25, parentid = 0},
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = 0.723339, oz = 0, ow = -0.690493, x = 4057.69, z = 37, y = -6217.54, parentid = 0},
-	--	{templateFile = "object/tangible/terminal/terminal_character_builder.iff", ox = 0, oy = 0.00721678, oz = 0, ow = 0.999974, x = -293.367, z = 35, y = 4854.52, parentid = 0}
 	}
 }
 
