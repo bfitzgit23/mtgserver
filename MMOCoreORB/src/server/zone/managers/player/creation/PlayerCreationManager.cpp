@@ -406,48 +406,53 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 		ghost->setStarterProfession(profession);
 	}
 
-	// === MTG PATCH: Jedi-start aligned to original + Lightsaber novice + training saber ===
-{
-    const bool isJediStart = profession.contains("jedi");
-    if (isJediStart && ghost != nullptr) {
-        // Original-style enablement (no full unlock, no FS novice)
-        ghost->setJediState(2);
-        ghost->addHologrindProfession(0);
-        SkillManager::instance()->awardSkill("force_title_jedi_rank_02", playerCreature, false, true, true);
+	// === SWGReturns PATCH: Jedi-start (FS novice + LS novice + title + working training saber) ===
+	{
+		const bool isJediStart =
+			profession.contains("jedi") || profession.contains("force_") || profession == "jedi_padawan";
 
-        // Allow saber usage at start WITHOUT granting FS novice
-        SkillManager::instance()->awardSkill("force_discipline_light_saber_novice", playerCreature, false, true, true);
+		if (isJediStart && ghost != nullptr) {
+			// Make sure any internal checks pass
+			ghost->setJediState(4);
 
-        // Drop a training lightsaber into inventory so the player can equip it immediately.
-        SceneObject* inventory = playerCreature->getSlottedObject("inventory");
-        if (inventory != nullptr) {
-            const String saberTpls[] = {
-                // prefer generic training saber; fallback to crafted if generic fails
-                "object/weapon/melee/sword/crafted_saber/generic_sword_lightsaber_training.iff",
-                "object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff"
-            };
-            for (int i = 0; i < 2; ++i) {
-                const String& saberTpl = saberTpls[i];
-                ManagedReference<SceneObject*> saber = nullptr;
-                try {
-                    saber = zoneServer->createObject(saberTpl.hashCode(), 1);
-                } catch (Exception& e) {
-                    error(e.getMessage());
-                }
-                if (saber != nullptr) {
-                    if (!inventory->transferObject(saber, -1, false)) {
-                        saber->destroyObjectFromDatabase(true);
-                    }
-                    break;
-                } else {
-                    error("could not create training saber: " + saberTpl);
-                }
-            }
-        }
-    }
-}
-// === End Jedi-start patch
+			auto* sm = SkillManager::instance();
 
+			// Core boxes to ensure saber use & title line
+			sm->awardSkill("force_sensitive_novice",              playerCreature, false, true, true);
+			sm->awardSkill("force_discipline_light_saber_novice", playerCreature, false, true, true);
+			sm->awardSkill("force_title_jedi_novice",             playerCreature, false, true, true);
+
+			// Give a *non-crafted* training saber first; fall back to crafted if needed.
+			SceneObject* inventory = playerCreature->getSlottedObject("inventory");
+			if (inventory != nullptr) {
+				const String saberCandidates[] = {
+					"object/weapon/melee/sword/sword_lightsaber_training.iff",                 // non-crafted (preferred)
+					"object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff"    // fallback
+				};
+
+				for (int i = 0; i < 2; ++i) {
+					const String& saberTpl = saberCandidates[i];
+					ManagedReference<SceneObject*> saber = nullptr;
+					try {
+						saber = zoneServer->createObject(saberTpl.hashCode(), 1);
+					} catch (Exception& e) {
+						error(e.getMessage());
+					}
+
+					if (saber != nullptr) {
+						if (!inventory->transferObject(saber, -1, false)) {
+							saber->destroyObjectFromDatabase(true);
+						}
+						break; // stop after first successful spawn
+					} else {
+						error("could not create training saber: " + saberTpl);
+					}
+				}
+			}
+			// (Robes intentionally NOT added here to avoid the double-robe issue)
+		}
+	}
+	// === End Jedi-start patch ===
 
 	addCustomization(playerCreature, customization, playerTemplate->getAppearanceFilename());
 	addHair(playerCreature, hairTemplate, hairCustomization);
@@ -585,21 +590,20 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 
 	JediManager::instance()->onPlayerCreated(playerCreature);
 
-	// === SWGReturns PATCH: Welcome Mail (edit strings below as you like) ===
+	// === SWGReturns PATCH: Welcome Mail ===
 	{
-const String mailSender   = "SWGReturns";
-const String mailSubject  = "Welcome to SWGReturns";
-const String mailBody     = "Welcome to SWGReturns!\\n"
-    "\\n"
-    "• Visit our Discord for support and updates.\\n"
-    "\\n"
-    "Have fun, and may the Force be with you!\\n"
-    "\\n"
-    "— SWGReturns Team";
-chatManager->sendMail(mailSender, mailSubject, mailBody, playerCreature->getFirstName());
-
+		const String mailSender   = "SWGReturns";
+		const String mailSubject  = "Welcome to SWGReturns";
+		const String mailBody     = "Welcome to SWGReturns!\\n"
+			"\\n"
+			"• Visit our Discord for support and updates.\\n"
+			"\\n"
+			"Have fun, and may the Force be with you!\\n"
+			"\\n"
+			"— SWGReturns Team";
+		chatManager->sendMail(mailSender, mailSubject, mailBody, playerCreature->getFirstName());
 	}
-	// (Optional) JTL recruitment mail task — keep/remove per your design:
+	// (Optional) JTL recruitment mail task
 	// SendJtlRecruitment* jtlMailTask = new SendJtlRecruitment(playerCreature);
 	// if (jtlMailTask != nullptr) jtlMailTask->schedule(10000);
 	// === End Mail Patch ===
@@ -609,8 +613,8 @@ chatManager->sendMail(mailSender, mailSubject, mailBody, playerCreature->getFirs
 	ghost2->addChatRoom(chatManager->getAuctionRoom()->getRoomID());
 
 	ManagedReference<SuiMessageBox*> box = new SuiMessageBox(playerCreature, SuiWindowType::NONE);
-box->setPromptTitle("Welcome");
-box->setPromptText("Welcome to SWGReturns!\\nBe sure to read check Discord for patch notes or ask for help!");
+	box->setPromptTitle("Welcome");
+	box->setPromptText("Welcome to SWGReturns!\\nBe sure to read check Discord for patch notes or ask for help!");
 	String playerName = playerCreature->getFirstName();
 	StringBuffer zBroadcast;
 	zBroadcast << "\\#00ace6" << playerName << " \\#ffb90f has joined SWGReturns!";
