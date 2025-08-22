@@ -229,8 +229,16 @@ void LootManagerImplementation::setCustomizationData(const LootItemTemplate* tem
 
 	const Vector<String>* customizationData = templateObject->getCustomizationStringNames();
 	const Vector<Vector<int> >* customizationValues = templateObject->getCustomizationValues();
+	if (customizationData == nullptr || customizationValues == nullptr) {
+		warning() << "[Loot] Missing customization data/values";
+		return;
+	}
 
 	for (int i = 0; i < customizationData->size(); ++i) {
+		if (i >= customizationValues->size()) {
+			warning() << "[Loot] Customization values size mismatch for template";
+			continue;
+		}
 		const String& customizationString = customizationData->get(i);
 		Vector<int>* values = &customizationValues->get(i);
 
@@ -624,32 +632,44 @@ void LootManagerImplementation::setSkillMods(TangibleObject* prototype, const Lo
 }
 
 String LootManagerImplementation::getRandomLootableMod(uint32 sceneObjectType) {
+	// Safety guards: avoid random on empty vectors; log and return empty string if unavailable
 	if (sceneObjectType == SceneObjectType::ARMORATTACHMENT) {
+		if (lootableArmorAttachmentMods.size() <= 0) { error() << "[Loot] No armor attachment mods available"; return ""; }
 		return lootableArmorAttachmentMods.get(System::random(lootableArmorAttachmentMods.size() - 1));
 	} else if (sceneObjectType == SceneObjectType::CLOTHINGATTACHMENT) {
+		if (lootableClothingAttachmentMods.size() <= 0) { error() << "[Loot] No clothing attachment mods available"; return ""; }
 		return lootableClothingAttachmentMods.get(System::random(lootableClothingAttachmentMods.size() - 1));
 	} else if (sceneObjectType & SceneObjectType::ARMOR) {
+		if (lootableArmorMods.size() <= 0) { error() << "[Loot] No armor mods available"; return ""; }
 		return lootableArmorMods.get(System::random(lootableArmorMods.size() - 1));
 	} else if ((sceneObjectType & SceneObjectType::CLOTHING) || (sceneObjectType & SceneObjectType::JEWELRY)) {
+		if (lootableClothingMods.size() <= 0) { error() << "[Loot] No clothing mods available"; return ""; }
 		return lootableClothingMods.get(System::random(lootableClothingMods.size() - 1));
 	} else if (sceneObjectType == SceneObjectType::ONEHANDMELEEWEAPON) {
+		if (lootableOneHandedMeleeMods.size() <= 0) { error() << "[Loot] No 1H melee mods available"; return ""; }
 		return lootableOneHandedMeleeMods.get(System::random(lootableOneHandedMeleeMods.size() - 1));
 	} else if (sceneObjectType == SceneObjectType::TWOHANDMELEEWEAPON) {
+		if (lootableTwoHandedMeleeMods.size() <= 0) { error() << "[Loot] No 2H melee mods available"; return ""; }
 		return lootableTwoHandedMeleeMods.get(System::random(lootableTwoHandedMeleeMods.size() - 1));
 	} else if (sceneObjectType == SceneObjectType::MELEEWEAPON) {
+		if (lootableUnarmedMods.size() <= 0) { error() << "[Loot] No unarmed melee mods available"; return ""; }
 		return lootableUnarmedMods.get(System::random(lootableUnarmedMods.size() - 1));
 	} else if (sceneObjectType == SceneObjectType::PISTOL) {
+		if (lootablePistolMods.size() <= 0) { error() << "[Loot] No pistol mods available"; return ""; }
 		return lootablePistolMods.get(System::random(lootablePistolMods.size() - 1));
 	} else if (sceneObjectType == SceneObjectType::RIFLE) {
+		if (lootableRifleMods.size() <= 0) { error() << "[Loot] No rifle mods available"; return ""; }
 		return lootableRifleMods.get(System::random(lootableRifleMods.size() - 1));
 	} else if (sceneObjectType == SceneObjectType::CARBINE) {
+		if (lootableCarbineMods.size() <= 0) { error() << "[Loot] No carbine mods available"; return ""; }
 		return lootableCarbineMods.get(System::random(lootableCarbineMods.size() - 1));
 	} else if (sceneObjectType == SceneObjectType::POLEARM) {
+		if (lootablePolearmMods.size() <= 0) { error() << "[Loot] No polearm mods available"; return ""; }
 		return lootablePolearmMods.get(System::random(lootablePolearmMods.size() - 1));
 	} else if (sceneObjectType == SceneObjectType::SPECIALHEAVYWEAPON) {
+		if (lootableHeavyWeaponMods.size() <= 0) { error() << "[Loot] No heavy weapon mods available"; return ""; }
 		return lootableHeavyWeaponMods.get(System::random(lootableHeavyWeaponMods.size() - 1));
 	}
-
 	return "";
 }
 
@@ -819,20 +839,19 @@ bool LootManagerImplementation::createLootSet(TransactionLog& trx, SceneObject* 
 		warning("Loot group template requested does not exist: " + lootGroup);
 		return false;
 	}
-	//Roll for the item out of the group.
+	// Original behavior rolled once and used a contiguous index range.
+	// To prevent out-of-bounds if the group is undersized/misaligned, we select by roll each time.
 	int roll = System::random(10000000);
-
-	int lootGroupEntryIndex = group->getLootGroupIntEntryForRoll(roll);
 
 	trx.addState("lootSetSize", setSize);
 	trx.addState("lootGroup", lootGroup);
 
 	for(int q = 0; q < setSize; q++) {
-		String selection = group->getLootGroupEntryAt(lootGroupEntryIndex+q);
+		String selection = (q == 0) ? group->getLootGroupEntryForRoll(roll) : group->getLootGroupEntryForRoll(System::random(10000000));
 		Reference<const LootItemTemplate*> itemTemplate = lootGroupMap->getLootItemTemplate(selection);
 
 		if (itemTemplate == nullptr) {
-			warning("Loot item template requested does not exist: " + group->getLootGroupEntryForRoll(roll) + " for templateName: " + group->getTemplateName());
+			warning("Loot item template requested does not exist for selection: " + selection + " templateName: " + group->getTemplateName());
 			return false;
 		}
 
@@ -868,6 +887,7 @@ bool LootManagerImplementation::createLootSet(TransactionLog& trx, SceneObject* 
 	}
 
 	return true;
+
 }
 
 void LootManagerImplementation::addStaticDots(TangibleObject* object, const LootItemTemplate* templateObject, int level) {
@@ -1033,10 +1053,10 @@ void LootManagerImplementation::addRandomDots(TangibleObject* object, const Loot
 			durMod = 1.5f;
 		}
 
-		int strength = LootValues::getDistributedValue(randomDotStrength.get(0), randomDotStrength.get(1), level) * modifier * strMod;
-		int duration = LootValues::getDistributedValue(randomDotDuration.get(0), randomDotDuration.get(1), level) * modifier * durMod;
-		int potency = LootValues::getDistributedValue(randomDotPotency.get(0), randomDotPotency.get(1), level) * modifier;
-		int uses = LootValues::getDistributedValue(randomDotUses.get(0), randomDotUses.get(1), level) * modifier;
+		int strength = (randomDotStrength.size() >= 2 ? LootValues::getDistributedValue(randomDotStrength.get(0), randomDotStrength.get(1), level) : 0) * modifier * strMod;
+		int duration = (randomDotDuration.size() >= 2 ? LootValues::getDistributedValue(randomDotDuration.get(0), randomDotDuration.get(1), level) : 0) * modifier * durMod;
+		int potency = (randomDotPotency.size() >= 2 ? LootValues::getDistributedValue(randomDotPotency.get(0), randomDotPotency.get(1), level) : 0) * modifier;
+		int uses = (randomDotUses.size() >= 2 ? LootValues::getDistributedValue(randomDotUses.get(0), randomDotUses.get(1), level) : 0) * modifier;
 
 		if (strength <= 0 || duration <= 0 || potency <= 0 || uses <= 0) {
 			continue;
