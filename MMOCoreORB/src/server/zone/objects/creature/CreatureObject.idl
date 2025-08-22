@@ -1710,7 +1710,7 @@ class CreatureObject extends TangibleObject {
 
 	@read
 	public float getSpeedMultiplierMod() {
-		return speedMultiplierMod * 1.25;
+		return speedMultiplierMod * 2.0;
 	}
 
 	@mock
