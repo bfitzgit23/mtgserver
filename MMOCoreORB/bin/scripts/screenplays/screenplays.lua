@@ -732,3 +732,7 @@ includeFile("../custom_scripts/screenplays/screenplays.lua")
 
 includeFile("custom_screenplays/screenplays.lua")
 includeFile("tasks/naboo/myswg_vendor.lua")
+
+--Mission terminal files
+includeFile("tools/mission_direction_choice.lua")
+includeFile("tools/mission_level_choice.lua"
