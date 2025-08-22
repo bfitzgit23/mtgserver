@@ -23,6 +23,7 @@
 #include "server/zone/objects/player/sui/messagebox/SuiMessageBox.h"
 #include "server/zone/objects/player/sui/callbacks/SurrenderPilotSuiCallback.h"
 #include "templates/faction/Factions.h"
+#include "server/chat/ChatManager.h"  // <-- added for galaxy broadcasts
 
 SkillManager::SkillManager()
 	: Logger("SkillManager") {
@@ -363,6 +364,54 @@ bool SkillManager::awardSkill(const String& skillName, CreatureObject* creature,
 		//Update maximum experience.
 		updateXpLimits(ghost);
 
+		// --- SWGReturns: auto-award Jedi titles on rank thresholds + broadcasts ---
+		{
+			const String& justAwarded = skill->getSkillName();
+
+			// Only react to rank path boxes, not titles or unrelated skills
+			if (justAwarded.beginsWith("force_rank_")) {
+				bool becameKnight = false;
+				bool becameMaster = false;
+
+				// Snapshot before awarding, to detect first-time achievement
+				const bool hadKnightTitle = creature->hasSkill("force_title_jedi_rank_04");
+				const bool hadMasterTitle = creature->hasSkill("force_title_jedi_master");
+
+				// Knight title at rank_05 (either path)
+				if (justAwarded == "force_rank_dark_rank_05" || justAwarded == "force_rank_light_rank_05"
+					|| creature->hasSkill("force_rank_dark_rank_05") || creature->hasSkill("force_rank_light_rank_05")) {
+
+					SkillManager::instance()->awardSkill("force_title_jedi_rank_04", creature, true, true, true);
+					becameKnight = !hadKnightTitle && creature->hasSkill("force_title_jedi_rank_04");
+				}
+
+				// Master title at rank_10 (either path)
+				if (justAwarded == "force_rank_dark_rank_10" || justAwarded == "force_rank_light_rank_10"
+					|| creature->hasSkill("force_rank_dark_rank_10") || creature->hasSkill("force_rank_light_rank_10")) {
+
+					SkillManager::instance()->awardSkill("force_title_jedi_master", creature, true, true, true);
+					becameMaster = !hadMasterTitle && creature->hasSkill("force_title_jedi_master");
+				}
+
+				// Broadcast galaxy-wide on first-time achievement
+				if (becameKnight || becameMaster) {
+					ChatManager* chat = creature->getZoneServer()->getChatManager();
+					if (chat != nullptr) {
+						const String playerName = creature->getFirstName();
+						StringBuffer msg;
+						if (becameMaster) {
+							// Gold highlight for Master
+							msg << "\\#ffb90f" << playerName << "\\#ffffff has achieved \\#ffb90fJedi Master\\#ffffff!";
+						} else {
+							// Blue highlight for Knight
+							msg << "\\#00ace6" << playerName << "\\#ffffff has become a \\#00ace6Jedi Knight\\#ffffff!";
+						}
+						chat->broadcastGalaxy(NULL, msg.toString());
+					}
+				}
+			}
+		}
+		// --- end SWGReturns patch ---
 
 		// Update Force Power Max.
 		ghost->recalculateForcePower();
@@ -747,22 +796,8 @@ void SkillManager::awardDraftSchematics(Skill* skill, PlayerObject* ghost, bool 
 	}
 }
 
-	if (skill->getSkillName() == "force_rank_dark_rank_05" || creature->hasSkill("force_rank_dark_rank_05")) {
-		awardSkill("force_title_jedi_rank_04", creature, true, true, true);
 
-	}
-	if (skill->getSkillName() == "force_rank_light_rank_05" || creature->hasSkill("force_rank_light_rank_05")) {
-		awardSkill("force_title_jedi_rank_04", creature, true, true, true);
 
-	}
-	if (skill->getSkillName() == "force_rank_dark_rank_10" || creature->hasSkill("force_rank_dark_rank_10")) {
-		awardSkill("force_title_jedi_master", creature, true, true, true);
-
-	}
-	if (skill->getSkillName() == "force_rank_light_rank_10" || creature->hasSkill("force_rank_light_rank_10")) {
-		awardSkill("force_title_jedi_master", creature, true, true, true);
-
-	}
 
 void SkillManager::updateXpLimits(PlayerObject* ghost) {
 	if (ghost == nullptr || !ghost->isPlayerObject()) {
