@@ -102,6 +102,7 @@ includeFile("space/conversations/imperial/imperialBrokerConvoHandler.lua")
 
 -- Black Epsilon
 includeFile("space/BlackEpsilonSquadronScreenplay.lua")
+includeFile("space/conversations/imperial/hakasshaSireenConvoHandler.lua")
 
 -- Imperial Inquisition
 includeFile("space/InquisitionSquadronScreenplay.lua")
