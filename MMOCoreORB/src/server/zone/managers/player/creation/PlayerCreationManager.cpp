@@ -448,6 +448,7 @@ if (isJediStart && ghost != nullptr) {
     }
 }
 // === End Jedi-start patch ===
+
   
     addCustomization(playerCreature, customization, playerTemplate->getAppearanceFilename());
     addHair(playerCreature, hairTemplate, hairCustomization);
