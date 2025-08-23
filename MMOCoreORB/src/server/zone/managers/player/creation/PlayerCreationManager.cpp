@@ -415,17 +415,34 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 		ghost->setStarterProfession(profession);
 	}
 
-	// If starting as Jedi, ensure proper state and grant novice/title after points are set
-	if (ghost != nullptr && profession.toLowerCase().contains("jedi")) {
-		// Ensure JediState meets the novice boxes’ requirement (commonly 2; adjust if your data differs)
-		ghost->setJediState(2);
+	// === Jedi-start hard patch ===
+{
+    const bool isJediStart = profession.contains("jedi") || profession.contains("force");
+    if (isJediStart && ghost != nullptr) {
+        ghost->setJediState(2);
+        ghost->addHologrindProfession(0);
 
-		// Award base Jedi title and lightsaber novice, granting prereqs and ignoring XP cost
-		bool okTitle = SkillManager::instance()->awardSkill(
-			"force_title_jedi_novice", playerCreature, /*notify*/true, /*awardRequiredSkills*/true, /*noXpRequired*/true);
+        auto* sm = SkillManager::instance();
 
-		bool okSaber = SkillManager::instance()->awardSkill(
-			"force_discipline_light_saber_novice", playerCreature, /*notify*/true, /*awardRequiredSkills*/true, /*noXpRequired*/true);
+        // Debug logs
+        info() << "[JediStart] Forcing Jedi skills for " << playerCreature->getFirstName();
+
+        try {
+            sm->awardSkill("force_sensitive_novice", playerCreature, true, true, true);
+            info() << "[JediStart] Granted force_sensitive_novice";
+        } catch (...) { error("[JediStart] Failed force_sensitive_novice"); }
+
+        try {
+            sm->awardSkill("force_discipline_light_saber_novice", playerCreature, true, true, true);
+            info() << "[JediStart] Granted force_discipline_light_saber_novice";
+        } catch (...) { error("[JediStart] Failed force_discipline_light_saber_novice"); }
+
+        try {
+            sm->awardSkill("force_title_jedi_novice", playerCreature, true, true, true);
+            info() << "[JediStart] Granted force_title_jedi_novice";
+        } catch (...) {
+            try {
+                sm->awardSkill("force_title_j;
 
 		if (!okTitle || !okSaber) {
 			info() << "[CREATION] Jedi novice award failed: title=" << okTitle << " saber=" << okSaber;
