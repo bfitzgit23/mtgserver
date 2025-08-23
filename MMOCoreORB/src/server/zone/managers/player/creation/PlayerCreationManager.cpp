@@ -415,48 +415,59 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 		ghost->setStarterProfession(profession);
 	}
 
-if (profession.contains("jedi"))
-            if (ghost != nullptr) {
-            	ghost->setJediState(2);
-            	ghost->addHologrindProfession(0);
-            	// Award force_title_jedi_rank_02 skill
-            	SkillManager::instance()->awardSkill("force_title_jedi_rank_02", playerCreature, false, true, true);
-            }
+	// ======= JEDI START BLOCK (Returns-style rank + novice saber & titles) =======
+	if (profession.contains("jedi")) {
+		if (ghost != nullptr) {
+			ghost->setJediState(2);                // ensure Jedi state meets rank/novice requirements
+			ghost->addHologrindProfession(0);      // preserve Returns Holocron/Rank integration
+		}
 
-	// Training lightsaber into inventory
-if (SceneObject* inventory = playerCreature->getSlottedObject("inventory")) {
-    const String saberTpls[] = {
-        "object/weapon/melee/sword/crafted_saber/generic_sword_lightsaber_training.iff",
-        "object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff"
-    };
+		// Award rank_02 (Returns), padawan title (if your skill tree has it), novice title, and lightsaber novice.
+		bool okRank02   = SkillManager::instance()->awardSkill("force_title_jedi_rank_02",            playerCreature, true, true, true);
+		bool okPadawan  = SkillManager::instance()->awardSkill("force_title_jedi_padawan",            playerCreature, true, true, true); // safe if missing
+		bool okNovTitle = SkillManager::instance()->awardSkill("force_title_jedi_novice",             playerCreature, true, true, true);
+		bool okSaberNov = SkillManager::instance()->awardSkill("force_discipline_light_saber_novice", playerCreature, true, true, true);
 
-    for (int i = 0; i < 2; ++i) {
-        const String& saberTpl = saberTpls[i];
+		info() << "[CREATION][JEDI] rank_02=" << okRank02
+		       << " padawanTitle=" << okPadawan
+		       << " noviceTitle=" << okNovTitle
+		       << " saberNovice=" << okSaberNov;
 
-        ManagedReference<SceneObject*> saber = nullptr;
-        try {
-            saber = zoneServer->createObject(saberTpl.hashCode(), 1);
-        } catch (...) {
-            saber = nullptr;
-        }
+		// Try to place a training lightsaber in inventory (two common template variants).
+		if (SceneObject* inventory = playerCreature->getSlottedObject("inventory")) {
+			const String saberTpls[] = {
+				"object/weapon/melee/sword/crafted_saber/generic_sword_lightsaber_training.iff",
+				"object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff"
+			};
 
-        if (saber != nullptr) {
-            if (inventory->transferObject(saber, -1, false)) {
-                // success — stop trying further templates
-                break;
-            } else {
-                // failed to transfer — clean up and try next template
-                saber->destroyObjectFromDatabase(true);
-            }
-        }
-    }
-} // === End Jedi-start patch ===
+			for (int i = 0; i < 2; ++i) {
+				const String& saberTpl = saberTpls[i];
 
-if (ghost != nullptr) {
-    // Set skillpoints before adding any skills.
-    ghost->setSkillPoints(skillPoints);
-    ghost->setStarterProfession(profession);
-}
+				ManagedReference<SceneObject*> saber = nullptr;
+				try {
+					saber = zoneServer->createObject(saberTpl.hashCode(), 1);
+				} catch (...) {
+					saber = nullptr;
+				}
+
+				if (saber != nullptr) {
+					if (inventory->transferObject(saber, -1, false)) {
+						info() << "[CREATION][JEDI] Training saber added: " << saberTpl;
+						break; // success—stop trying others
+					} else {
+						saber->destroyObjectFromDatabase(true);
+					}
+				}
+			}
+		}
+	}
+	// ======= JEDI END BLOCK =======
+
+	if (ghost != nullptr) {
+		//Set skillpoints before adding any skills. (kept as in your original)
+		ghost->setSkillPoints(skillPoints);
+		ghost->setStarterProfession(profession);
+	}
 
 	addCustomization(playerCreature, customization, playerTemplate->getAppearanceFilename());
 	addHair(playerCreature, hairTemplate, hairCustomization);
@@ -578,7 +589,7 @@ if (ghost != nullptr) {
 		query
 				<< "INSERT INTO `characters_dirty` (`character_oid`, `account_id`, `galaxy_id`, `firstname`, `surname`, `race`, `gender`, `template`)"
 				<< " VALUES (" << playerCreature->getObjectID() << ","
-				<< client->getAccountID() << "," << zoneServer.get()->getGalaxyID()
+				<< client->getAccountID() << "," << zoneServer->get()->getGalaxyID()
 				<< "," << "'" << firstName.escapeString() << "','"
 				<< lastName.escapeString() << "'," << raceID << "," << 0 << ",'"
 				<< raceFile.escapeString() << "')";
@@ -590,7 +601,7 @@ if (ghost != nullptr) {
 
 	playerManager->addPlayer(playerCreature);
 
-	client->addCharacter(playerCreature->getObjectID(), zoneServer.get()->getGalaxyID());
+	client->addCharacter(playerCreature->getObjectID(), zoneServer->get()->getGalaxyID());
 
 	JediManager::instance()->onPlayerCreated(playerCreature);
 
