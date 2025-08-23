@@ -416,20 +416,21 @@ const bool isJediStart = profession.contains("jedi") || profession.contains("for
 if (isJediStart && ghost != nullptr) {
     ghost->setJediState(2);
 
-    if (auto* sm = SkillManager::instance()) {
+    SkillManager* sm = SkillManager::instance();
+    if (sm != nullptr) {
         sm->awardSkill("force_sensitive_novice", playerCreature, false, true, true);
         sm->awardSkill("force_discipline_light_saber_novice", playerCreature, false, true, true);
         sm->awardSkill("force_title_jedi_novice", playerCreature, false, true, true);
     }
 
     if (SceneObject* inventory = playerCreature->getSlottedObject("inventory")) {
-        // try both common training saber template paths
         const String saberTpls[] = {
             "object/weapon/melee/sword/crafted_saber/generic_sword_lightsaber_training.iff",
             "object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff"
         };
 
-        for (const auto& tpl : saberTpls) {
+        for (int i = 0; i < 2; ++i) {
+            const String& tpl = saberTpls[i];
             ManagedReference<SceneObject*> saber = nullptr;
             try {
                 saber = zoneServer->createObject(tpl.hashCode(), 1);
@@ -441,7 +442,7 @@ if (isJediStart && ghost != nullptr) {
                 if (!inventory->transferObject(saber, -1, false)) {
                     saber->destroyObjectFromDatabase(true);
                 }
-                break; // stop after first successful create/transfer
+                break; // first success is enough
             }
         }
     }
