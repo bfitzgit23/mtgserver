@@ -316,7 +316,7 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
     auto client = callback->getClient();
     auto maxchars = ConfigManager::instance()->getInt("Core3.PlayerCreationManager.MaxCharactersPerGalaxy", 10);
 
-    // FIX: zoneServer raw pointer usage (was zoneServer.get()->)
+    // Use raw pointer access for zoneServer held pointer
     if (client->getCharacterCount(zoneServer->getGalaxyID()) >= maxchars) {
         ErrorMessage* errMsg = new ErrorMessage("Create Error", "You are limited to 10 characters per galaxy.", 0x0);
         client->sendMessage(errMsg);
@@ -324,14 +324,12 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
     }
 
     PlayerManager* playerManager = zoneServer->getPlayerManager();
-
     SkillManager* skillManager = SkillManager::instance();
 
-    //Get all the data and validate it.
+    // Get all the data and validate it.
     UnicodeString characterName;
     callback->getCharacterName(characterName);
 
-    //TODO: Replace this at some point?
     if (!playerManager->checkPlayerName(callback))
         return false;
 
@@ -353,14 +351,12 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
     RacialCreationData* raceData = racialCreationData.get(fileName);
 
     if (raceData == nullptr)
-        raceData = racialCreationData.get(0); //Just get the first race, since they tried to create a race that doesn't exist.
+        raceData = racialCreationData.get(0); // Just get the first race, since they tried to create a race that doesn't exist.
 
     String profession, customization, hairTemplate, hairCustomization;
     callback->getSkill(profession);
 
-    // IMPORTANT: allow choosing Jedi (do NOT force artisan)
-    // (previous fork sometimes had: if (profession.contains("jedi")) profession = "crafting_artisan";)
-
+    // Allow Jedi to be selected (do NOT force artisan)
     callback->getCustomizationString(customization);
     callback->getHairObject(hairTemplate);
     callback->getHairCustomization(hairCustomization);
@@ -368,7 +364,7 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
     float height = callback->getHeight();
     height = Math::max(Math::min(height, playerTemplate->getMaxScale()), playerTemplate->getMinScale());
 
-    //validate biography
+    // Validate biography
     UnicodeString bio;
     callback->getBiography(bio);
 
@@ -385,7 +381,7 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 
     playerCreature->createChildObjects();
     playerCreature->setHeight(height);
-    playerCreature->setCustomObjectName(characterName, false); //TODO: Validate with Name Manager.
+    playerCreature->setCustomObjectName(characterName, false); // TODO: Validate with Name Manager.
 
     client->setPlayer(playerCreature);
     playerCreature->setClient(client);
@@ -406,50 +402,53 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
     ManagedReference<PlayerObject*> ghost = playerCreature->getPlayerObject();
 
     if (ghost != nullptr) {
-        //Set skillpoints before adding any skills.
+        // Set skillpoints before adding any skills.
         ghost->setSkillPoints(skillPoints);
         ghost->setStarterProfession(profession);
     }
 
-    // === Jedi-start patch ===
-const bool isJediStart = profession.contains("jedi") || profession.contains("force_");
-if (isJediStart && ghost != nullptr) {
-    ghost->setJediState(2);
+    // ==== JEDI-START PATCH ====
+    {
+        const bool isJediStart =
+            profession.contains("jedi") || profession.contains("force_") || profession == "jedi_padawan";
 
-    SkillManager* sm = SkillManager::instance();
-    if (sm != nullptr) {
-        sm->awardSkill("force_sensitive_novice", playerCreature, false, true, true);
-        sm->awardSkill("force_discipline_light_saber_novice", playerCreature, false, true, true);
-        sm->awardSkill("force_title_jedi_novice", playerCreature, false, true, true);
-    }
+        if (isJediStart && ghost != nullptr) {
+            // Ensure saber usage is allowed immediately
+            // (value 4 is a permissive state in many forks; adjust if your core differs)
+            ghost->setJediState(4);
 
-    if (SceneObject* inventory = playerCreature->getSlottedObject("inventory")) {
-        const String saberTpls[] = {
-            "object/weapon/melee/sword/crafted_saber/generic_sword_lightsaber_training.iff",
-            "object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff"
-        };
+            auto* sm = SkillManager::instance();
 
-        for (int i = 0; i < 2; ++i) {
-            const String& tpl = saberTpls[i];
-            ManagedReference<SceneObject*> saber = nullptr;
-            try {
-                saber = zoneServer->createObject(tpl.hashCode(), 1);
-            } catch (...) {
-                saber = nullptr;
-            }
+            // 1) Grant Force Sensitive novice
+            sm->awardSkill("force_sensitive_novice", playerCreature, false, true, true);
 
-            if (saber != nullptr) {
-                if (!inventory->transferObject(saber, -1, false)) {
-                    saber->destroyObjectFromDatabase(true);
+            // 2) Grant Lightsaber novice (correct skill name)
+            sm->awardSkill("force_discipline_light_saber_novice", playerCreature, false, true, true);
+
+            // 3) Padawan title line (base title)
+            sm->awardSkill("force_title_jedi_novice", playerCreature, false, true, true);
+
+            // 4) Drop a training lightsaber into inventory
+            if (SceneObject* inventory = playerCreature->getSlottedObject("inventory")) {
+                const String saberTpl = "object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff";
+                ManagedReference<SceneObject*> saber = nullptr;
+                try {
+                    saber = zoneServer->createObject(saberTpl.hashCode(), 1);
+                } catch (Exception& e) {
+                    error(e.getMessage());
                 }
-                break; // first success is enough
+                if (saber != nullptr) {
+                    if (!inventory->transferObject(saber, -1, false)) {
+                        saber->destroyObjectFromDatabase(true);
+                    }
+                } else {
+                    error("could not create training saber: " + saberTpl);
+                }
             }
         }
     }
-}
-// === End Jedi-start patch ===
+    // ==== END JEDI-START PATCH ====
 
-  
     addCustomization(playerCreature, customization, playerTemplate->getAppearanceFilename());
     addHair(playerCreature, hairTemplate, hairCustomization);
 
@@ -523,6 +522,7 @@ if (isJediStart && ghost != nullptr) {
                             return false;
                         } else {
                             lastCreatedTime.updateToCurrentTime();
+
                             lastCreatedCharacter.put(accID, lastCreatedTime);
                         }
                     } else {
@@ -580,12 +580,11 @@ if (isJediStart && ghost != nullptr) {
 
     playerManager->addPlayer(playerCreature);
 
-    // FIX: zoneServer raw pointer usage here too
     client->addCharacter(playerCreature->getObjectID(), zoneServer->getGalaxyID());
 
     JediManager::instance()->onPlayerCreated(playerCreature);
 
-    // === Custom Welcome Mail (your text) ===
+    // === Custom Welcome Mail ===
     {
         const String mailSender  = "SWGReturns";
         const String mailSubject = "Welcome to SWGReturns";
@@ -600,15 +599,15 @@ if (isJediStart && ghost != nullptr) {
         chatManager->sendMail(mailSender, mailSubject, mailBody, playerCreature->getFirstName());
     }
 
-    // (Optional) JTL recruitment mail task — keep/remove per your design:
+    // (Optional) JTL recruitment mail task
     // SendJtlRecruitment* jtlMailTask = new SendJtlRecruitment(playerCreature);
     // if (jtlMailTask != nullptr) jtlMailTask->schedule(10000);
 
-    //Join auction chat room
+    // Join auction chat room
     ManagedReference<PlayerObject*> ghost2 = playerCreature->getPlayerObject();
     ghost2->addChatRoom(chatManager->getAuctionRoom()->getRoomID());
 
-    // === Welcome SUI (your wording) ===
+    // === Welcome SUI ===
     ManagedReference<SuiMessageBox*> box = new SuiMessageBox(playerCreature, SuiWindowType::NONE);
     box->setPromptTitle("Welcome");
     box->setPromptText("Welcome to SWGReturns!\\nBe sure to check Discord for patch notes or ask for help!");
@@ -699,7 +698,7 @@ void PlayerCreationManager::addStartingItems(CreatureObject* creature,
             return;
         }
 
-        //Add common starting items.
+        // Add common starting items.
         for (int itemNumber = 0; itemNumber < commonStartingItems.size(); itemNumber++) {
             ManagedReference<SceneObject*> item = zoneServer->createObject(
                     commonStartingItems.get(itemNumber).hashCode(), 1);
@@ -722,10 +721,10 @@ void PlayerCreationManager::addProfessionStartingItems(CreatureObject* creature,
 
     auto startingSkill = professionData->getSkill();
 
-    //Starting skill.
+    // Starting skill.
     SkillManager::instance()->awardSkill(startingSkill->getSkillName(), creature, false, true, true);
 
-    //Set the hams.
+    // Set the hams.
     for (int i = 0; i < 9; ++i) {
         int mod = professionData->getAttributeMod(i);
         creature->setBaseHAM(i, mod, false);
@@ -767,7 +766,7 @@ void PlayerCreationManager::addProfessionStartingItems(CreatureObject* creature,
             return;
         }
 
-        //Add profession specific items.
+        // Add profession specific items.
         for (int itemNumber = 0; itemNumber < professionData->getStartingItems()->size(); itemNumber++) {
             String itemTemplate = professionData->getStartingItems()->get(itemNumber);
 
@@ -809,7 +808,7 @@ void PlayerCreationManager::addHair(CreatureObject* creature,
 
     ManagedReference<SceneObject*> hair = zoneServer->createObject(hairTemplate.hashCode(), 1);
 
-    //TODO: Validate hairCustomization
+    // TODO: Validate hairCustomization
     if (hair == nullptr) {
         return;
     }
@@ -839,7 +838,7 @@ void PlayerCreationManager::addHair(CreatureObject* creature,
 
 void PlayerCreationManager::addCustomization(CreatureObject* creature,
         const String& customizationString, const String& appearanceFilename) const {
-    //TODO: Validate customizationString
+    // TODO: Validate customizationString
     CustomizationVariables data;
 
     data.parseFromClientString(customizationString);
@@ -864,7 +863,7 @@ void PlayerCreationManager::addStartingItemsInto(CreatureObject* creature,
         return;
     }
 
-    //Add common starting items.
+    // Add common starting items.
     for (int itemNumber = 0; itemNumber < commonStartingItems.size(); itemNumber++) {
         ManagedReference<SceneObject*> item = zoneServer->createObject(
                 commonStartingItems.get(itemNumber).hashCode(), 1);
@@ -877,7 +876,7 @@ void PlayerCreationManager::addStartingItemsInto(CreatureObject* creature,
         }
     }
 
-    //Add profession specific items.
+    // Add profession specific items.
     PlayerObject* player = creature->getPlayerObject();
     if (player == nullptr) {
         instance()->info("addStartingItemsInto: playerObject nullptr");
@@ -903,7 +902,7 @@ void PlayerCreationManager::addStartingItemsInto(CreatureObject* creature,
         }
     }
 
-    //Add race specific items.
+    // Add race specific items.
     const Vector<String>& startingItems = playerTemplate->getStartingItems();
 
     for (int i = 0; i < startingItems.size(); ++i) {
@@ -947,7 +946,7 @@ void PlayerCreationManager::addStartingWeaponsInto(CreatureObject* creature,
     if (professionData == nullptr)
         professionData = professionDefaultsInfo.get(0);
 
-    //Add common starting items.
+    // Add common starting items.
     for (int itemNumber = 0; itemNumber < commonStartingItems.size(); itemNumber++) {
         ManagedReference<SceneObject*> item = zoneServer->createObject(
                 commonStartingItems.get(itemNumber).hashCode(), 1);
@@ -962,7 +961,7 @@ void PlayerCreationManager::addStartingWeaponsInto(CreatureObject* creature,
         }
     }
 
-    //Add profession specific items.
+    // Add profession specific items.
     for (int itemNumber = 0; itemNumber < professionData->getStartingItems()->size(); itemNumber++) {
         ManagedReference<SceneObject*> item = zoneServer->createObject(
                 professionData->getStartingItems()->get(itemNumber).hashCode(), 1);
@@ -977,7 +976,7 @@ void PlayerCreationManager::addStartingWeaponsInto(CreatureObject* creature,
         }
     }
 
-    //Add race specific items.
+    // Add race specific items.
     const Vector<String>& startingItems = playerTemplate->getStartingItems();
 
     for (int i = 0; i < startingItems.size(); ++i) {
@@ -1038,3 +1037,4 @@ void PlayerCreationManager::addRacialMods(CreatureObject* creature,
             }
         }
     }
+}
