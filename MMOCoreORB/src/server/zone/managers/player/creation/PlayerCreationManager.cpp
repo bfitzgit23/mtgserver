@@ -412,23 +412,36 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
     }
 
     // === Jedi-start patch ===
-{
-    const bool isJediStart = profession.contains("jedi") || profession.contains("force_");
-    if (isJediStart && ghost != nullptr) {
-        ghost->setJediState(2);
+const bool isJediStart = profession.contains("jedi") || profession.contains("force_");
+if (isJediStart && ghost != nullptr) {
+    ghost->setJediState(2);
 
-        auto* sm = SkillManager::instance();
+    if (auto* sm = SkillManager::instance()) {
         sm->awardSkill("force_sensitive_novice", playerCreature, false, true, true);
         sm->awardSkill("force_discipline_light_saber_novice", playerCreature, false, true, true);
         sm->awardSkill("force_title_jedi_novice", playerCreature, false, true, true);
+    }
 
-        if (SceneObject* inventory = playerCreature->getSlottedObject("inventory")) {
-            const String saberTpl = "object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff";
-            ManagedReference<SceneObject*> saber = zoneServer->createObject(saberTpl.hashCode(), 1);
+    if (SceneObject* inventory = playerCreature->getSlottedObject("inventory")) {
+        // try both common training saber template paths
+        const String saberTpls[] = {
+            "object/weapon/melee/sword/crafted_saber/generic_sword_lightsaber_training.iff",
+            "object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff"
+        };
+
+        for (const auto& tpl : saberTpls) {
+            ManagedReference<SceneObject*> saber = nullptr;
+            try {
+                saber = zoneServer->createObject(tpl.hashCode(), 1);
+            } catch (...) {
+                saber = nullptr;
+            }
+
             if (saber != nullptr) {
                 if (!inventory->transferObject(saber, -1, false)) {
                     saber->destroyObjectFromDatabase(true);
                 }
+                break; // stop after first successful create/transfer
             }
         }
     }
