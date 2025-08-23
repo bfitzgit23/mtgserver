@@ -424,31 +424,39 @@ if (profession.contains("jedi"))
             }
 
 	// Training lightsaber into inventory
-        if (SceneObject* inventory = playerCreature->getSlottedObject("inventory")) {
-            const String saberTpls[] = {
-                "object/weapon/melee/sword/crafted_saber/generic_sword_lightsaber_training.iff",
-                "object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff"
-            };
-            for (int i = 0; i < 2; ++i) {
-                const String& saberTpl = saberTpls[i];
-                ManagedReference<SceneObject*> saber = nullptr;
-                try {
-                    saber = zoneServer->createObject(saberTpl.hashCode(), 1);
-                } catch (...) {
-                    saber = nullptr;
-                }
-                if (saber != nullptr) {
-                    if (!inventory->transferObject(saber, -1, false)) {
-                        saber->destroyObjectFromDatabase(true);
-                    }
-                    break;
- } } } } // === End Jedi-start patch ===
+if (SceneObject* inventory = playerCreature->getSlottedObject("inventory")) {
+    const String saberTpls[] = {
+        "object/weapon/melee/sword/crafted_saber/generic_sword_lightsaber_training.iff",
+        "object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff"
+    };
+
+    for (int i = 0; i < 2; ++i) {
+        const String& saberTpl = saberTpls[i];
+
+        ManagedReference<SceneObject*> saber = nullptr;
+        try {
+            saber = zoneServer->createObject(saberTpl.hashCode(), 1);
+        } catch (...) {
+            saber = nullptr;
+        }
+
+        if (saber != nullptr) {
+            if (inventory->transferObject(saber, -1, false)) {
+                // success — stop trying further templates
+                break;
+            } else {
+                // failed to transfer — clean up and try next template
+                saber->destroyObjectFromDatabase(true);
+            }
+        }
+    }
+} // === End Jedi-start patch ===
 
 if (ghost != nullptr) {
-		//Set skillpoints before adding any skills.
-		ghost->setSkillPoints(skillPoints);
-		ghost->setStarterProfession(profession);
-	}
+    // Set skillpoints before adding any skills.
+    ghost->setSkillPoints(skillPoints);
+    ghost->setStarterProfession(profession);
+}
 
 	addCustomization(playerCreature, customization, playerTemplate->getAppearanceFilename());
 	addHair(playerCreature, hairTemplate, hairCustomization);
