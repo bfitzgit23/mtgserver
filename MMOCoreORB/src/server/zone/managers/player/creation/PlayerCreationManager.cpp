@@ -442,12 +442,13 @@ if (profession.contains("jedi"))
                         saber->destroyObjectFromDatabase(true);
                     }
                     break;
-                }
-            }
-        }
-    }
-}
-// === End Jedi-start patch ===
+ } } } } // === End Jedi-start patch ===
+
+if (ghost != nullptr) {
+		//Set skillpoints before adding any skills.
+		ghost->setSkillPoints(skillPoints);
+		ghost->setStarterProfession(profession);
+	}
 
 	addCustomization(playerCreature, customization, playerTemplate->getAppearanceFilename());
 	addHair(playerCreature, hairTemplate, hairCustomization);
