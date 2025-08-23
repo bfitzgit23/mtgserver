@@ -415,21 +415,15 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 		ghost->setStarterProfession(profession);
 	}
 
-	// === Jedi-start patch ===
-{
-    const bool isJediStart = profession.contains("jedi") || profession.contains("force_");
-    if (isJediStart && ghost != nullptr) {
-        ghost->setJediState(2); // or 4 if your repo requires higher unlock
+if (profession.contains("jedi"))
+            if (ghost != nullptr) {
+            	ghost->setJediState(2);
+            	ghost->addHologrindProfession(0);
+            	// Award force_title_jedi_rank_02 skill
+            	SkillManager::instance()->awardSkill("force_title_jedi_rank_02", playerCreature, false, true, true);
+            }
 
-        auto* sm = SkillManager::instance();
-
-        // Jedi Initiate (Padawan title)
-        sm->awardSkill("force_title_jedi_novice", playerCreature, false, true, true);
-
-        // Novice Lightsaber
-        sm->awardSkill("force_discipline_light_saber_novice", playerCreature, false, true, true);
-
-        // Training lightsaber into inventory
+			 // Training lightsaber into inventory
         if (SceneObject* inventory = playerCreature->getSlottedObject("inventory")) {
             const String saberTpls[] = {
                 "object/weapon/melee/sword/crafted_saber/generic_sword_lightsaber_training.iff",
@@ -447,13 +441,6 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
                     if (!inventory->transferObject(saber, -1, false)) {
                         saber->destroyObjectFromDatabase(true);
                     }
-                    break;
-                }
-            }
-        }
-    }
-}
-// === End Jedi-start patch ===
 
 	addCustomization(playerCreature, customization, playerTemplate->getAppearanceFilename());
 	addHair(playerCreature, hairTemplate, hairCustomization);
