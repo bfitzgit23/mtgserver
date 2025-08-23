@@ -411,47 +411,30 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
         ghost->setStarterProfession(profession);
     }
 
-    // ==== JEDI-START PATCH ====
-    {
-        const bool isJediStart =
-            profession.contains("jedi") || profession.contains("force_") || profession == "jedi_padawan";
+    // === Jedi-start patch ===
+{
+    const bool isJediStart = profession.contains("jedi") || profession.contains("force_");
+    if (isJediStart && ghost != nullptr) {
+        ghost->setJediState(2);
 
-        if (isJediStart && ghost != nullptr) {
-            // Make sure saber is usable immediately (your repo: 4 is a safe permissive state)
-            ghost->setJediState(4);
+        auto* sm = SkillManager::instance();
+        sm->awardSkill("force_sensitive_novice", playerCreature, false, true, true);
+        sm->awardSkill("force_discipline_light_saber_novice", playerCreature, false, true, true);
+        sm->awardSkill("force_title_jedi_novice", playerCreature, false, true, true);
 
-            auto* sm = SkillManager::instance();
-
-            // 1) FS novice
-            sm->awardSkill("force_sensitive_novice", playerCreature, false, true, true);
-
-            // 2) Lightsaber novice (correct name per your data)
-            sm->awardSkill("force_discipline_light_saber_novice", playerCreature, false, true, true);
-
-            // 3) Padawan title line
-            sm->awardSkill("force_title_jedi_novice", playerCreature, false, true, true);
-
-            // 4) Training lightsaber into inventory
-            if (SceneObject* inventory = playerCreature->getSlottedObject("inventory")) {
-                const String saberTpl = "object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff";
-                ManagedReference<SceneObject*> saber = nullptr;
-                try {
-                    saber = zoneServer->createObject(saberTpl.hashCode(), 1);
-                } catch (Exception& e) {
-                    error(e.getMessage());
-                }
-                if (saber != nullptr) {
-                    if (!inventory->transferObject(saber, -1, false)) {
-                        saber->destroyObjectFromDatabase(true);
-                    }
-                } else {
-                    error("could not create training saber: " + saberTpl);
+        if (SceneObject* inventory = playerCreature->getSlottedObject("inventory")) {
+            const String saberTpl = "object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff";
+            ManagedReference<SceneObject*> saber = zoneServer->createObject(saberTpl.hashCode(), 1);
+            if (saber != nullptr) {
+                if (!inventory->transferObject(saber, -1, false)) {
+                    saber->destroyObjectFromDatabase(true);
                 }
             }
         }
     }
-    // ==== END JEDI-START PATCH ====
-
+}
+// === End Jedi-start patch ===
+  
     addCustomization(playerCreature, customization, playerTemplate->getAppearanceFilename());
     addHair(playerCreature, hairTemplate, hairCustomization);
 
