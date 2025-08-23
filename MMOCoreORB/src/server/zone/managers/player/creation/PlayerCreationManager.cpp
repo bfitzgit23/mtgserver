@@ -415,39 +415,45 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 		ghost->setStarterProfession(profession);
 	}
 
-	// === Jedi-start hard patch ===
+	// === Jedi-start patch ===
 {
-    const bool isJediStart = profession.contains("jedi") || profession.contains("force");
+    const bool isJediStart = profession.contains("jedi") || profession.contains("force_");
     if (isJediStart && ghost != nullptr) {
-        ghost->setJediState(2);
-        ghost->addHologrindProfession(0);
+        ghost->setJediState(2); // or 4 if your repo requires higher unlock
 
         auto* sm = SkillManager::instance();
 
-        // Debug logs
-        info() << "[JediStart] Forcing Jedi skills for " << playerCreature->getFirstName();
+        // Jedi Initiate (Padawan title)
+        sm->awardSkill("force_title_jedi_novice", playerCreature, false, true, true);
 
-        try {
-            sm->awardSkill("force_sensitive_novice", playerCreature, true, true, true);
-            info() << "[JediStart] Granted force_sensitive_novice";
-        } catch (...) { error("[JediStart] Failed force_sensitive_novice"); }
+        // Novice Lightsaber
+        sm->awardSkill("force_discipline_light_saber_novice", playerCreature, false, true, true);
 
-        try {
-            sm->awardSkill("force_discipline_light_saber_novice", playerCreature, true, true, true);
-            info() << "[JediStart] Granted force_discipline_light_saber_novice";
-        } catch (...) { error("[JediStart] Failed force_discipline_light_saber_novice"); }
-
-        try {
-            sm->awardSkill("force_title_jedi_novice", playerCreature, true, true, true);
-            info() << "[JediStart] Granted force_title_jedi_novice";
-        } catch (...) {
-            try {
-                sm->awardSkill("force_title_j;
-
-		if (!okTitle || !okSaber) {
-			info() << "[CREATION] Jedi novice award failed: title=" << okTitle << " saber=" << okSaber;
-		}
-	}
+        // Training lightsaber into inventory
+        if (SceneObject* inventory = playerCreature->getSlottedObject("inventory")) {
+            const String saberTpls[] = {
+                "object/weapon/melee/sword/crafted_saber/generic_sword_lightsaber_training.iff",
+                "object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff"
+            };
+            for (int i = 0; i < 2; ++i) {
+                const String& saberTpl = saberTpls[i];
+                ManagedReference<SceneObject*> saber = nullptr;
+                try {
+                    saber = zoneServer->createObject(saberTpl.hashCode(), 1);
+                } catch (...) {
+                    saber = nullptr;
+                }
+                if (saber != nullptr) {
+                    if (!inventory->transferObject(saber, -1, false)) {
+                        saber->destroyObjectFromDatabase(true);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+}
+// === End Jedi-start patch ===
 
 	addCustomization(playerCreature, customization, playerTemplate->getAppearanceFilename());
 	addHair(playerCreature, hairTemplate, hairCustomization);
