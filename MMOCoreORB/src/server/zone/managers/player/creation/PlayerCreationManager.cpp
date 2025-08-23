@@ -423,7 +423,7 @@ if (profession.contains("jedi"))
             	SkillManager::instance()->awardSkill("force_title_jedi_rank_02", playerCreature, false, true, true);
             }
 
-			 // Training lightsaber into inventory
+	// Training lightsaber into inventory
         if (SceneObject* inventory = playerCreature->getSlottedObject("inventory")) {
             const String saberTpls[] = {
                 "object/weapon/melee/sword/crafted_saber/generic_sword_lightsaber_training.iff",
@@ -441,6 +441,13 @@ if (profession.contains("jedi"))
                     if (!inventory->transferObject(saber, -1, false)) {
                         saber->destroyObjectFromDatabase(true);
                     }
+                    break;
+                }
+            }
+        }
+    }
+}
+// === End Jedi-start patch ===
 
 	addCustomization(playerCreature, customization, playerTemplate->getAppearanceFilename());
 	addHair(playerCreature, hairTemplate, hairCustomization);
