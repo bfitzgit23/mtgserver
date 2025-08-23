@@ -22,6 +22,8 @@
 #include "server/zone/managers/jedi/JediManager.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
 #include "server/zone/managers/player/creation/SendJtlRecruitment.h"
+// Added to ensure SkillManager is available explicitly
+#include "server/zone/managers/skill/SkillManager.h"
 
 PlayerCreationManager::PlayerCreationManager() : Logger("PlayerCreationManager") {
 	setLogging(false);
@@ -378,55 +380,31 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 		ghost->setStarterProfession(profession);
 	}
 
-	// === JEDI START PATCH: force grant FS novice + Lightsaber novice + Padawan title, safe & non-breaking ===
+	// === JEDI CREATION AWARD (robust, no side-effects) =========================
+	// Give Lightsaber Novice and Jedi Title at creation if the selected start is a Jedi path.
 	{
-		const bool isJediStart = profession.contains("jedi");
-		if (isJediStart && ghost != nullptr) {
-			// Minimal enablement (classic-style, not a full unlock)
-			ghost->setJediState(2);
-			ghost->addHologrindProfession(0);
+		// Determine if the selected profession implies a Jedi start.
+		String profLower = profession; profLower = profLower.toLowerCase();
 
-			// 1) Force-Sensitive Novice (forced)
-			SkillManager::instance()->awardSkill("force_sensitive_novice",
-				playerCreature, /*ignorePrereqs=*/true, /*notify=*/true, /*grantXp=*/true);
+		String startingSkillName;
+		Reference<ProfessionDefaultsInfo*> pdi = professionDefaultsInfo.get(profession);
+		if (pdi != nullptr && pdi->getSkill() != nullptr)
+			startingSkillName = pdi->getSkill()->getSkillName();
+		String startLower = startingSkillName; startLower = startLower.toLowerCase();
 
-			// 2) Novice Lightsaber (forced)
-			SkillManager::instance()->awardSkill("force_discipline_light_saber_novice",
-				playerCreature, /*ignorePrereqs=*/true, /*notify=*/true, /*grantXp=*/true);
+		const bool jediSelected =
+			profLower.contains("jedi") ||
+			startLower.contains("jedi") ||
+			startLower.contains("force_sensitive") ||
+			startLower.contains("force_title_jedi");
 
-			// 3) Padawan/Jedi title — try modern name, then legacy; swallow failures
-			try {
-				SkillManager::instance()->awardSkill("force_title_jedi_novice",
-					playerCreature, /*ignorePrereqs=*/true, /*notify=*/true, /*grantXp=*/true);
-			} catch (Exception&){ /* ignore */ }
-			try {
-				SkillManager::instance()->awardSkill("force_title_jedi_rank_02",
-					playerCreature, /*ignorePrereqs=*/true, /*notify=*/true, /*grantXp=*/true);
-			} catch (Exception&){ /* ignore */ }
-
-			// 4) Training lightsaber into inventory (generic -> crafted fallback)
-			if (SceneObject* inventory = playerCreature->getSlottedObject("inventory")) {
-				const String saberTpls[] = {
-					"object/weapon/melee/sword/crafted_saber/generic_sword_lightsaber_training.iff",
-					"object/weapon/melee/sword/crafted_saber/sword_lightsaber_training.iff"
-				};
-				for (int i = 0; i < 2; ++i) {
-					const String& saberTpl = saberTpls[i];
-					ManagedReference<SceneObject*> saber = nullptr;
-					try { saber = zoneServer->createObject(saberTpl.hashCode(), 1); }
-					catch (Exception& e) { error(e.getMessage()); }
-					if (saber != nullptr) {
-						if (!inventory->transferObject(saber, -1, false))
-							saber->destroyObjectFromDatabase(true);
-						break;
-					} else {
-						error("could not create training saber: " + saberTpl);
-					}
-				}
-			}
+		if (jediSelected) {
+			// Award at creation; ignore prereqs to bypass gating.
+			skillManager->awardSkill("force_title_jedi_novice", playerCreature, /*ignorePrereqs=*/true, /*notify=*/true, /*grantXp=*/true);
+			skillManager->awardSkill("force_discipline_light_saber_novice", playerCreature, /*ignorePrereqs=*/true, /*notify=*/true, /*grantXp=*/true);
 		}
 	}
-	// === End Jedi patch ===
+	// ===========================================================================
 
 	addCustomization(playerCreature, customization, playerTemplate->getAppearanceFilename());
 	addHair(playerCreature, hairTemplate, hairCustomization);
