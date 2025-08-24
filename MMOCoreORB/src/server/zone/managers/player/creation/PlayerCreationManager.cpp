@@ -614,11 +614,6 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 
     client->addCharacter(playerCreature->getObjectID(), zoneServer->getGalaxyID());
 
-    // *** PATCH: use the JediManager singleton (no ZoneServer::getJediManager in your core)
-    JediManager::instance()->onPlayerCreated(playerCreature);
-    JediManager::instance()->applyBaselineIfNeeded(playerCreature); // optional but recommended
-    with this:
-
     // Jedi creation hook
     JediManager::instance()->onPlayerCreated(playerCreature);
 
