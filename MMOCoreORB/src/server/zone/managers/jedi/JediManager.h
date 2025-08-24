@@ -60,6 +60,8 @@ public:
 	 */
 	~JediManager();
 
+	void applyBaselineIfNeeded(CreatureObject* creature);
+
 	/**
 	 * Load the Jedi Manager configuration.
 	 * @param luaEngine the lua engine to use for loading the configuration.
