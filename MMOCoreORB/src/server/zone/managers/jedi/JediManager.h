@@ -7,11 +7,6 @@
 
 #include "server/zone/objects/creature/CreatureObject.h"
 
-// Minimal forward declarations to avoid heavy includes here
-class Lua;
-class Skill;
-class SceneObject;
-
 namespace server {
 namespace zone {
 namespace managers {
@@ -64,12 +59,6 @@ public:
 	 * Destructor for the Jedi Manager.
 	 */
 	~JediManager();
-
-	/**
-	 * Creation/login-time fixer to raise Jedi HAM to baseline if needed.
-	 * (We only raise low stats; never lower higher ones.)
-	 */
-	void applyBaselineIfNeeded(CreatureObject* creature);
 
 	/**
 	 * Load the Jedi Manager configuration.
