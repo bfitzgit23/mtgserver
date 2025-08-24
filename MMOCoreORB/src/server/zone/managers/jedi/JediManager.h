@@ -6,6 +6,8 @@
 #define JEDIMANAGER_H_
 
 #include "server/zone/objects/creature/CreatureObject.h"
+#include "server/zone/objects/player/PlayerObject.h"
+#include "server/zone/managers/skill/SkillManager.h"
 
 namespace server {
 namespace zone {
