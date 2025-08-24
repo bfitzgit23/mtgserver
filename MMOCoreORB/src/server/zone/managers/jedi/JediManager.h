@@ -1,13 +1,16 @@
 /*
-                Copyright <SWGEmu>
-        See file COPYING for copying conditions.*/
+				Copyright <SWGEmu>
+		See file COPYING for copying conditions.*/
 
 #ifndef JEDIMANAGER_H_
 #define JEDIMANAGER_H_
 
 #include "server/zone/objects/creature/CreatureObject.h"
-#include "server/zone/objects/player/PlayerObject.h"
-#include "server/zone/managers/skill/SkillManager.h"
+
+// Minimal forward declarations to avoid heavy includes here
+class Lua;
+class Skill;
+class SceneObject;
 
 namespace server {
 namespace zone {
@@ -62,7 +65,10 @@ public:
 	 */
 	~JediManager();
 
-	// Login-time fixer to raise existing Jedi to baseline if needed
+	/**
+	 * Creation/login-time fixer to raise Jedi HAM to baseline if needed.
+	 * (We only raise low stats; never lower higher ones.)
+	 */
 	void applyBaselineIfNeeded(CreatureObject* creature);
 
 	/**
