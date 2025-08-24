@@ -1,6 +1,6 @@
 /*
-				Copyright <SWGEmu>
-		See file COPYING for copying conditions.*/
+                Copyright <SWGEmu>
+        See file COPYING for copying conditions.*/
 
 #ifndef JEDIMANAGER_H_
 #define JEDIMANAGER_H_
@@ -62,6 +62,7 @@ public:
 	 */
 	~JediManager();
 
+	// Login-time fixer to raise existing Jedi to baseline if needed
 	void applyBaselineIfNeeded(CreatureObject* creature);
 
 	/**
@@ -81,7 +82,6 @@ public:
 	 * @param creature the creature/player that logged in.
 	 */
 	void onPlayerLoggedIn(CreatureObject* creature);
-	JediManager::instance()->applyBaselineIfNeeded(playerCreature);
 
 	/**
 	 * On player logged out.
