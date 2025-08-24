@@ -757,11 +757,25 @@ void PlayerCreationManager::addProfessionStartingItems(CreatureObject* creature,
     SkillManager::instance()->awardSkill(startingSkill->getSkillName(), creature, false, true, true);
 
     // Set the hams.
-    for (int i = 0; i < 9; ++i) {
-        int mod = professionData->getAttributeMod(i);
-        creature->setBaseHAM(i, mod, false);
-        creature->setHAM(i, mod, false);
-        creature->setMaxHAM(i, mod, false);
+    // [PATCH] Tanky Jedi: if starter profession is Jedi, use tanky presets instead of defaults.
+    const bool isJediStart =
+        profession.contains("jedi") || profession.contains("force_") || profession == "jedi_padawan";
+
+    if (isJediStart) {
+        // Order: 0..8 = Health, Action, Mind, Strength, Constitution, Quickness, Stamina, Intelligence, Presence
+        const int tanky[9] = { 1000, 850, 850, 65, 65, 55, 65, 55, 55 };
+        for (int i = 0; i < 9; ++i) {
+            creature->setBaseHAM(i, tanky[i], false);
+            creature->setHAM(i,      tanky[i], false);
+            creature->setMaxHAM(i,   tanky[i], false);
+        }
+    } else {
+        for (int i = 0; i < 9; ++i) {
+            int mod = professionData->getAttributeMod(i);
+            creature->setBaseHAM(i, mod, false);
+            creature->setHAM(i,      mod, false);
+            creature->setMaxHAM(i,   mod, false);
+        }
     }
 
     auto itemTemplates = professionData->getProfessionItems(clientTemplate);
@@ -1022,7 +1036,7 @@ void PlayerCreationManager::addStartingWeaponsInto(CreatureObject* creature,
                 item->destroyObjectFromDatabase(true);
             }
         } else if (item != nullptr) {
-            item->destroyObjectFromDatabase(true);
+            item->destroyObjectFromDatabase	true);
         }
     }
 }
