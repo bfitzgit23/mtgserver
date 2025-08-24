@@ -614,11 +614,9 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 
     client->addCharacter(playerCreature->getObjectID(), zoneServer->getGalaxyID());
 
-    // *** PATCH: use ZoneServer-owned JediManager + optional baseline at creation
-    if (auto jm = zoneServer->getJediManager()) {
-        jm->onPlayerCreated(playerCreature);
-        jm->applyBaselineIfNeeded(playerCreature); // optional but recommended
-    }
+    // *** PATCH: use the JediManager singleton (no ZoneServer::getJediManager in your core)
+    JediManager::instance()->onPlayerCreated(playerCreature);
+    JediManager::instance()->applyBaselineIfNeeded(playerCreature); // optional but recommended
 
     // === Custom Welcome Mail ===
     {
