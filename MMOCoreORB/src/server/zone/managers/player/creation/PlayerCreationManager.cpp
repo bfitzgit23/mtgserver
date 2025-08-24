@@ -445,6 +445,38 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
                     error("could not create training saber: " + saberTpl);
                 }
             }
+
+            // 5) Make sure the toon isn't in underwear — auto-equip a basic outfit.
+            auto tryEquip = [&](const String& tpl) {
+                ManagedReference<SceneObject*> obj = nullptr;
+                try { obj = zoneServer->createObject(tpl.hashCode(), 1); } catch (...) {}
+                if (obj == nullptr) return;
+
+                String err;
+                if (playerCreature->canAddObject(obj, /*equipped container*/4, err) == 0) {
+                    playerCreature->transferObject(obj, 4, false);
+                } else {
+                    // If equip fails (species/gender restriction), try inventory so the player can equip later
+                    if (SceneObject* inv = playerCreature->getSlottedObject("inventory")) {
+                        if (!inv->transferObject(obj, -1, false)) {
+                            obj->destroyObjectFromDatabase(true);
+                        }
+                    } else {
+                        obj->destroyObjectFromDatabase(true);
+                    }
+                }
+            };
+
+            // Try a robe first (if present in your TREs)
+            tryEquip("object/tangible/wearables/robe/robe_jedi_light_s01.iff");
+
+            // Fallback basic outfit that exists on most cores
+            tryEquip("object/tangible/wearables/shirt/shirt_s08.iff");
+            tryEquip("object/tangible/wearables/pants/pants_s01.iff");
+            tryEquip("object/tangible/wearables/boots/boots_s01.iff");
+
+            // Bonus: bandolier often wearable by Wookiees and others
+            tryEquip("object/tangible/wearables/bandolier/bandolier_s01.iff");
         }
     }
     // ==== END JEDI-START PATCH ====
