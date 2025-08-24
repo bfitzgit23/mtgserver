@@ -117,6 +117,8 @@
 #include "server/zone/packets/object/transform/Transform.h"
 
 #include "server/zone/managers/statistics/StatisticsManager.h"
+#include "server/zone/managers/jedi/JediManager.h"
+
 
 // #define DEBUG_SPEED_HACK
 
@@ -224,9 +226,29 @@ bool PlayerManagerImplementation::rescheduleOnlinePlayerLogTask(int logSecs) {
 }
 
 bool PlayerManagerImplementation::createPlayer(ClientCreateCharacterCallback* callback) {
-	PlayerCreationManager* pcm = PlayerCreationManager::instance();
-	return pcm->createCharacter(callback);
+    PlayerCreationManager* pcm = PlayerCreationManager::instance();
+    bool created = pcm->createCharacter(callback);
+
+    if (!created)
+        return false;
+
+    // Retrieve the newly created player
+    auto client = callback->getClient();
+    if (client == nullptr)
+        return true;
+
+    auto playerCreature = client->getPlayer();
+    if (playerCreature == nullptr)
+        return true;
+
+    // Apply Jedi baseline if applicable
+    if (zoneServer != nullptr && zoneServer->getJediManager() != nullptr) {
+        zoneServer->getJediManager()->applyBaselineIfNeeded(playerCreature);
+    }
+
+    return true;
 }
+
 
 void PlayerManagerImplementation::loadLuaConfig() {
 	info("Loading configuration script.");
@@ -2639,11 +2661,16 @@ int PlayerManagerImplementation::awardExperience(CreatureObject* player, const S
 }
 
 void PlayerManagerImplementation::sendLoginMessage(CreatureObject* creature) {
-	String motd = server->getLoginMessage();
+    if (creature != nullptr && zoneServer != nullptr && zoneServer->getJediManager() != nullptr) {
+        // Fix up existing Jedi on login
+        zoneServer->getJediManager()->applyBaselineIfNeeded(creature);
+    }
 
-	ChatSystemMessage* csm = new ChatSystemMessage(UnicodeString(motd), ChatSystemMessage::DISPLAY_CHATONLY);
-	creature->sendMessage(csm);
+    String motd = server->getLoginMessage();
+    ChatSystemMessage* csm = new ChatSystemMessage(UnicodeString(motd), ChatSystemMessage::DISPLAY_CHATONLY);
+    creature->sendMessage(csm);
 }
+
 
 void PlayerManagerImplementation::resendLoginMessageToAll() {
 	ChatManager* chatManager = server->getChatManager();
