@@ -4,22 +4,6 @@
 
 #include "JediManager.h"
 #include "server/zone/managers/director/DirectorManager.h"
-#include "server/zone/managers/skill/SkillManager.h" // [PATCH] needed for skill checks
-
-// --- [PATCH] Helpers to detect Jedi + target baseline ---
-// We check via SkillManager so it matches server truth.
-static inline bool isJediCharacter(CreatureObject* creature) {
-	if (creature == nullptr) return false;
-	auto* sm = SkillManager::instance();
-	// Adjust tokens if your repo differs
-	return sm->hasSkill(creature, "force_sensitive_novice")
-	    || sm->hasSkill(creature, "jedi_padawan")
-	    || sm->hasSkill(creature, "force_title_jedi_novice");
-}
-
-// Order: Health, Action, Mind, Str, Con, Qui, Sta, Int, Pre
-static const int JEDI_TANKY_BASELINE[9] = { 1000, 850, 850, 65, 65, 55, 65, 55, 55 };
-// --- [/PATCH] ---
 
 JediManager::JediManager() : Logger("JediManager") {
 	jediProgressionType = NOJEDIPROGRESSION;
@@ -94,9 +78,6 @@ void JediManager::onPlayerCreated(CreatureObject* creature) {
 	*luaOnPlayerCreated << creature;
 
 	luaOnPlayerCreated->callFunction();
-
-	// [PATCH] Ensure fresh toons that are Jedi get the baseline right away
-	applyBaselineIfNeeded(creature);
 }
 
 void JediManager::onSkillRevoked(CreatureObject* creature, Skill* skill) {
@@ -114,9 +95,6 @@ void JediManager::onPlayerLoggedIn(CreatureObject* creature) {
 	*luaOnPlayerLoggedIn << creature;
 
 	luaOnPlayerLoggedIn->callFunction();
-
-	// [PATCH] Fix up existing characters that are Jedi (raise low HAM to tanky baseline)
-	applyBaselineIfNeeded(creature);
 }
 
 void JediManager::onPlayerLoggedOut(CreatureObject* creature) {
@@ -182,35 +160,4 @@ void JediManager::onFSTreeCompleted(CreatureObject* creature, const String& bran
 	*luaStartTask << branch;
 
 	luaStartTask->callFunction();
-}
-
-// =======================
-// [PATCH] Implementation
-// =======================
-void JediManager::applyBaselineIfNeeded(CreatureObject* creature) {
-	if (creature == nullptr || !creature->isPlayerCreature())
-		return;
-
-	if (!isJediCharacter(creature))
-		return;
-
-	bool changed = false;
-
-	// 0..8 = Health, Action, Mind, Strength, Constitution, Quickness, Stamina, Intelligence, Presence
-	for (int i = 0; i < 9; ++i) {
-		const int target = JEDI_TANKY_BASELINE[i];
-		const int cur    = creature->getBaseHAM(i);
-		if (cur < target) {
-			creature->setBaseHAM(i, target, /*sendUpdate*/false);
-			creature->setMaxHAM(i,  target, /*sendUpdate*/false);
-			creature->setHAM(i,     target, /*sendUpdate*/false);
-			changed = true;
-		}
-	}
-
-	if (changed) {
-		// Keep it portable across forks — avoid calling non-universal helpers
-		creature->broadcastPvpStatusBitmask();
-		info(true) << "Applied tanky baseline to Jedi " << creature->getDisplayedName();
-	}
 }
