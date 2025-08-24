@@ -81,6 +81,7 @@ public:
 	 * @param creature the creature/player that logged in.
 	 */
 	void onPlayerLoggedIn(CreatureObject* creature);
+	JediManager::instance()->applyBaselineIfNeeded(playerCreature);
 
 	/**
 	 * On player logged out.
