@@ -614,7 +614,11 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 
     client->addCharacter(playerCreature->getObjectID(), zoneServer->getGalaxyID());
 
-    JediManager::instance()->onPlayerCreated(playerCreature);
+    // *** PATCH: use ZoneServer-owned JediManager + optional baseline at creation
+    if (auto jm = zoneServer->getJediManager()) {
+        jm->onPlayerCreated(playerCreature);
+        jm->applyBaselineIfNeeded(playerCreature); // optional but recommended
+    }
 
     // === Custom Welcome Mail ===
     {
@@ -1036,7 +1040,8 @@ void PlayerCreationManager::addStartingWeaponsInto(CreatureObject* creature,
                 item->destroyObjectFromDatabase(true);
             }
         } else if (item != nullptr) {
-            item->destroyObjectFromDatabase	true);
+            // BUGFIX: was "destroyObjectFromDatabase  true);" (malformed)
+            item->destroyObjectFromDatabase(true);
         }
     }
 }
