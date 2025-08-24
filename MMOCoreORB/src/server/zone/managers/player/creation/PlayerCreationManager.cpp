@@ -617,6 +617,10 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
     // *** PATCH: use the JediManager singleton (no ZoneServer::getJediManager in your core)
     JediManager::instance()->onPlayerCreated(playerCreature);
     JediManager::instance()->applyBaselineIfNeeded(playerCreature); // optional but recommended
+    with this:
+
+    // Jedi creation hook
+    JediManager::instance()->onPlayerCreated(playerCreature);
 
     // === Custom Welcome Mail ===
     {
