@@ -1,102 +1,70 @@
 /*
-    SWGEmu Core3 - FixJediCommand
-    Sets Jedi baseline HAM + secondary attributes for a target or self.
-
-    Usage:
-      /fixjedi
-      /fixjedi <FirstName>
-
-    Permission: Admin level >= 9
+    Copyright <SWGEmu>
+    See file COPYING for copying conditions.
 */
 
-#include "server/zone/objects/creature/commands/QueueCommand.h"
-#include "server/zone/managers/player/PlayerManager.h"
-#include "server/zone/ZoneServer.h"
+#include "FixJediCommand.h"
+
 #include "server/zone/objects/creature/CreatureObject.h"
 #include "server/zone/objects/player/PlayerObject.h"
-#include "server/zone/ZoneProcessServer.h"
+#include "server/zone/ZoneServer.h"
+#include "server/chat/ChatManager.h"
 
-class FixJediCommand : public QueueCommand {
-public:
-    FixJediCommand(const String& name, ZoneProcessServer* server)
-        : QueueCommand(name, server) {
+int FixJediCommand::doQueueCommand(CreatureObject* creature,
+                                   const uint64& /*target*/,
+                                   const UnicodeString& arguments) const {
+    if (!checkStateMask(creature))
+        return INVALIDSTATE;
+
+    if (!checkInvalidLocomotions(creature))
+        return INVALIDLOCOMOTION;
+
+    if (creature == nullptr || !creature->isPlayerCreature())
+        return GENERALERROR;
+
+    // Admin check
+    ManagedReference<PlayerObject*> adminGhost = creature->getPlayerObject();
+    if (adminGhost == nullptr || adminGhost->getAdminLevel() < 9) {
+        creature->sendSystemMessage("You must be an admin to use this command.");
+        return GENERALERROR;
     }
 
-    int doQueueCommand(CreatureObject* creature, const uint64& /*targetID*/, const UnicodeString& arguments) const override {
-        if (creature == nullptr || !creature->isPlayerCreature())
-            return GENERALERROR;
+    // Parse argument (optional first name or "self")
+    String arg = arguments.toString().trim();
 
-        // Permission check: admin level >= 9 (GM)
-        PlayerObject* adminGhost = creature->getPlayerObject();
-        if (adminGhost == nullptr || adminGhost->getAdminLevel() < 9) {
-            creature->sendSystemMessage("You do not have permission to use /fixjedi.");
-            return INVALIDPARAMETERS;
-        }
+    // Default target is self
+    ManagedReference<CreatureObject*> targetCreature = creature;
 
-        // Resolve target: default self, or provided first name (case-insensitive without equalsIgnoreCase)
-        String arg = arguments.toString().trim();
-        bool useSelf = arg.isEmpty() || arg == "self" || arg == "Self" || arg == "SELF";
-
-        CreatureObject* target = creature;
-
-        if (!useSelf) {
-            ZoneServer* zoneServer = server->getZoneServer();
-            if (zoneServer == nullptr) {
-                creature->sendSystemMessage("Server error (ZoneServer is null).");
-                return GENERALERROR;
+    // If a name was provided (and not 'self'), try to resolve it via ChatManager
+    if (!arg.isEmpty() && !arg.equalsIgnoreCase("self")) {
+        ZoneServer* zserv = creature->getZoneServer();
+        if (zserv != nullptr) {
+            ChatManager* chat = zserv->getChatManager();
+            if (chat != nullptr) {
+                ManagedReference<CreatureObject*> found = chat->getPlayer(arg);
+                if (found != nullptr)
+                    targetCreature = found;
             }
-
-            PlayerManager* pm = zoneServer->getPlayerManager();
-            if (pm == nullptr) {
-                creature->sendSystemMessage("Server error (PlayerManager is null).");
-                return GENERALERROR;
-            }
-
-            ManagedReference<CreatureObject*> found = pm->getPlayerByFirstName(arg);
-            if (found == nullptr) {
-                creature->sendSystemMessage("Target not found or not online: " + arg);
-                return INVALIDPARAMETERS;
-            }
-
-            target = found;
         }
-
-        if (target == nullptr || !target->isPlayerCreature()) {
-            creature->sendSystemMessage("Invalid target.");
-            return INVALIDPARAMETERS;
-        }
-
-        PlayerObject* ghost = target->getPlayerObject();
-        if (ghost == nullptr) {
-            creature->sendSystemMessage("Target has no player object.");
-            return GENERALERROR;
-        }
-
-        // Require Jedi flag
-        if (ghost->getJediState() <= 0) {
-            creature->sendSystemMessage(target->getFirstName() + " is not flagged as Jedi.");
-            return INVALIDPARAMETERS;
-        }
-
-        // Jedi brawler-ish baseline (HAM + secondary)
-        const int jediBaseline[9] = { 1100, 900, 650, 600, 600, 500, 500, 450, 450 };
-        for (int i = 0; i < 9; ++i) {
-            target->setBaseHAM(i, jediBaseline[i], false);
-            target->setHAM(i,      jediBaseline[i], false);
-            target->setMaxHAM(i,   jediBaseline[i], false);
-        }
-
-        String who = target->getFirstName();
-        target->sendSystemMessage("Your Jedi baseline attributes have been set.");
-        if (target != creature)
-            creature->sendSystemMessage("Applied Jedi baseline to " + who + ".");
-
-        return SUCCESS;
     }
-};
 
-// Optional factory if your command system uses C++ factories instead of pure Lua binding.
-// If not used, it won't hurt to keep it here.
-static QueueCommand* FixJediCommandFactory(const String& name, ZoneProcessServer* server) {
-    return new FixJediCommand(name, server);
+    if (targetCreature == nullptr) {
+        creature->sendSystemMessage("Target player not found.");
+        return GENERALERROR;
+    }
+
+    // Apply “Jedi Brawler” baseline HAMs
+    // Order: 0..8 = Health, Action, Mind, Strength, Constitution, Quickness, Stamina, Intelligence, Presence
+    const int jediBrawler[9] = { 1100, 900, 650, 600, 600, 500, 500, 450, 450 };
+
+    for (int i = 0; i < 9; ++i) {
+        targetCreature->setBaseHAM(i, jediBrawler[i], false);
+        targetCreature->setHAM(i,      jediBrawler[i], false);
+        targetCreature->setMaxHAM(i,   jediBrawler[i], false);
+    }
+
+    // Let the client know
+    creature->sendSystemMessage("Jedi HAM baseline fixed for " + targetCreature->getFirstName() + ".");
+
+    return SUCCESS;
 }
