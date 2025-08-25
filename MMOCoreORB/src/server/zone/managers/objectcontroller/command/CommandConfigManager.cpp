@@ -3,6 +3,7 @@
 		See file COPYING for copying conditions. */
 
 #include "CommandConfigManager.h"
+#include "server/zone/objects/creature/commands/FixJediCommand.h"
 
 #include "server/zone/ZoneProcessServer.h"
 #include "server/zone/ZoneServer.h"
@@ -353,6 +354,11 @@ void CommandConfigManager::registerSpecialCommands(CommandList* sCommands) {
 		error("Could not create command /logout");
 	}
 
+	    QueueCommand* fixJediSlash = createCommand(String("fixjedi").toLowerCase());
+    if (fixJediSlash == nullptr) {
+        error("Could not create command /fixjedi");
+    }
+	
 	createCommand(String("mildPoison").toLowerCase())->setCommandGroup(0xe1c9a54a);
 	createCommand(String("strongPoison").toLowerCase())->setCommandGroup(0xe1c9a54a);
 
@@ -861,6 +867,8 @@ void CommandConfigManager::registerCommands() {
 	registerCommands2();
 	registerCommands3();
 	registerCommands4();
+
+	commandFactory.registerCommand<FixJediCommand>(String("fixjedi").toLowerCase());
 
 	//Space Commands
 	commandFactory.registerCommand<CommCommand>(String("comm").toLowerCase());
