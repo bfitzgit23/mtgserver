@@ -351,12 +351,14 @@ void CommandConfigManager::registerSpecialCommands(CommandList* sCommands) {
 		error("Could not create command /logout");
 	}
 
-	// --- FIX: register FixJedi factory BEFORE creating the slash command
+	// Register FixJedi factory BEFORE creating the slash command
 	commandFactory.registerCommand<FixJediCommand>(String("fixjedi").toLowerCase());
 
 	QueueCommand* fixJediSlash = createCommand(String("fixjedi").toLowerCase());
 	if (fixJediSlash == nullptr) {
 		error("Could not create command /fixjedi");
+	} else {
+		info(true) << "Created special command /fixjedi";
 	}
 
 	createCommand(String("mildPoison").toLowerCase())->setCommandGroup(0xe1c9a54a);
@@ -420,12 +422,10 @@ void CommandConfigManager::registerGlobals() {
 	setGlobalLong("FEIGNDEATH_STATE", CreatureState::FEIGNDEATH);
 	setGlobalLong("COMBATATTITUDEEVASIVE_STATE", CreatureState::COMBATATTITUDEEVASIVE);
 	setGlobalLong("COMBATATTITUDENORMAL_STATE", CreatureState::COMBATATTITUDENORMAL);
-	setGlobalLong("COMBATATTITUDENORMAL_STATE", CreatureState::COMBATATTITUDENORMAL);
 	setGlobalLong("COMBATATTITUDEAGGRESSIVE_STATE", CreatureState::COMBATATTITUDEAGGRESSIVE);
 	setGlobalLong("TUMBLING_STATE", CreatureState::TUMBLING);
 	setGlobalLong("RALLIED_STATE", CreatureState::RALLIED);
 	setGlobalLong("STUNNED_STATE", CreatureState::STUNNED);
-	setGlobalLong("FEIGNDEATH_STATE", CreatureState::FEIGNDEATH);
 	setGlobalLong("BLINDED_STATE", CreatureState::BLINDED);
 	setGlobalLong("DIZZY_STATE", CreatureState::DIZZY);
 	setGlobalLong("INTIMIDATED_STATE", CreatureState::INTIMIDATED);
