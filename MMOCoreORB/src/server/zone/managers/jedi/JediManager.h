@@ -1,6 +1,6 @@
 /*
-                Copyright <SWGEmu>
-        See file COPYING for copying conditions.*/
+				Copyright <SWGEmu>
+		See file COPYING for copying conditions.*/
 
 #ifndef JEDIMANAGER_H_
 #define JEDIMANAGER_H_
@@ -145,12 +145,6 @@ public:
 	 * @param branch String of the branch name.
 	 */
 	void onFSTreeCompleted(CreatureObject* creature, const String& branch);
-
-	/**
-	 * Login-time fixer to raise existing Jedi to the configured baseline if needed.
-	 * Implemented in JediManager.cpp.
-	 */
-	void applyBaselineIfNeeded(CreatureObject* creature);
 };
 
 }
