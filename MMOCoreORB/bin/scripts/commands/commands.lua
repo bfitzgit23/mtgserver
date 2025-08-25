@@ -833,3 +833,5 @@ RunSlashCommandsFile("unstick.lua")
 RunSlashCommandsFile("launchIntoSpace.lua")
 RunSlashCommandsFile("createVendor.lua")
 RunSlashCommandsFile("fixjedi.lua")
+
+addCommand("fixjedi", "server.zone.objects.creature.commands.FixJediCommand")
