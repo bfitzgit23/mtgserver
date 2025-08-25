@@ -1,26 +1,11 @@
 /*
                 Copyright <SWGEmu>
-        See file COPYING for copying conditions.
-*/
+        See file COPYING for copying conditions.*/
 
 #ifndef JEDIMANAGER_H_
 #define JEDIMANAGER_H_
 
 #include "server/zone/objects/creature/CreatureObject.h"
-
-// Forward declarations kept minimal and correctly scoped.
-class Lua;
-class Skill;
-
-namespace server {
-namespace zone {
-namespace objects {
-namespace scene {
-class SceneObject; // correct namespace for SceneObject
-}
-}
-}
-}
 
 namespace server {
 namespace zone {
@@ -32,71 +17,147 @@ namespace jedi {
  */
 class JediManager : public Singleton<JediManager>, public Logger, public Object, public ReadWriteLock {
 private:
-    /**
-     * The Jedi progression type currently configured.
-     */
-    AtomicInteger jediProgressionType;
+	/**
+	 * The Jedi progression type currently configured.
+	 */
+	AtomicInteger jediProgressionType;
 
-    /**
-     * The name of the jedi manager class in Lua.
-     */
-    String jediManagerName;
+	/**
+	 * The name of the jedi manager class in Lua.
+	 */
+	String jediManagerName;
 
-    AtomicBoolean loaded{false};
+	AtomicBoolean loaded{false};
 
-    /**
-     * Setup Lua global values.
-     * @param luaEngine the lua instance.
-     */
-    static void setupLuaValues(Lua* luaEngine);
+	/**
+	 * Setup Lua global values.
+	 * @param luaEngine the lua instance.
+	 */
+	static void setupLuaValues(Lua* luaEngine);
 
 public:
-    enum {
-        NOJEDIPROGRESSION,         // Jedi progression not available.
-        HOLOGRINDJEDIPROGRESSION,  // Master five random professions.
-        VILLAGEJEDIPROGRESSION,    // Village system.
-        CUSTOMJEDIPROGRESSION      // Custom progression.
-    };
 
-    enum {
-        ITEMHOLOCRON,
-        ITEMWAYPOINTDATAPAD,
-        ITEMTHEATERDATAPAD
-    };
+	enum {
+		NOJEDIPROGRESSION,         // Jedi progression not available.
+		HOLOGRINDJEDIPROGRESSION,  // Jedi progression through the hologrind system, i.e. master five random professions.
+		VILLAGEJEDIPROGRESSION,    // Jedi progression through the village system.
+		CUSTOMJEDIPROGRESSION      // Custom defined jedi progression system.
+	};
 
-    JediManager();
-    ~JediManager();
+	enum {
+		ITEMHOLOCRON,         // Item type holocron.
+		ITEMWAYPOINTDATAPAD,  // Item type waypoint datapad.
+		ITEMTHEATERDATAPAD    // ITEMTHEATERDATAPAD
+	};
 
-    void loadConfiguration(Lua* luaEngine);
+	/**
+	 * Constructor for the Jedi Manager.
+	 */
+	JediManager();
 
-    void onPlayerCreated(CreatureObject* creature);
-    void onPlayerLoggedIn(CreatureObject* creature);
-    void onPlayerLoggedOut(CreatureObject* creature);
-    void onSkillRevoked(CreatureObject* creature, Skill* skill);
+	/**
+	 * Destructor for the Jedi Manager.
+	 */
+	~JediManager();
 
-    void checkForceStatusCommand(CreatureObject* creature);
+	/**
+	 * Load the Jedi Manager configuration.
+	 * @param luaEngine the lua engine to use for loading the configuration.
+	 */
+	void loadConfiguration(Lua* luaEngine);
 
-    const String& getJediManagerName();
-    int getJediProgressionType();
-    void setJediManagerName(const String& name);
+	/**
+	 * On player created.
+	 * @param creature the creature/player that was created.
+	 */
+	void onPlayerCreated(CreatureObject* creature);
 
-    void useItem(server::zone::objects::scene::SceneObject* item, const int itemType, CreatureObject* creature);
+	/**
+	 * On player logged in.
+	 * @param creature the creature/player that logged in.
+	 */
+	void onPlayerLoggedIn(CreatureObject* creature);
 
-    bool canLearnSkill(CreatureObject* creature, const String& skillName);
-    bool canSurrenderSkill(CreatureObject* creature, const String& skillName);
+	/**
+	 * On player logged out.
+	 * @param creature the creature/player that logged out.
+	 */
+	void onPlayerLoggedOut(CreatureObject* creature);
 
-    void onFSTreeCompleted(CreatureObject* creature, const String& branch);
+	/**
+	 * On player skill revoked.
+	 * @param creature the creature/player that revoked a skill
+	 * @param skill the skill that was revoked
+	 */
+	void onSkillRevoked(CreatureObject* creature, Skill* skill);
 
-    /**
-     * Fix baseline stats for Jedi (used at login).
-     * Implemented in JediManager.cpp; called by onPlayerLoggedIn.
-     */
-    void applyBaselineIfNeeded(CreatureObject* creature);
+	/**
+	 * Check force status command.
+	 * Calls the checkForceStatusCommand in the lua manager.
+	 * @param creature the creature that performed the command.
+	 */
+	void checkForceStatusCommand(CreatureObject* creature);
+
+	/**
+	 * Get the name of the currently active lua jedi manager.
+	 * @return the name of the currently active lua jedi manager.
+	 */
+	const String& getJediManagerName();
+
+	/**
+	 * Get the value of the currently active jedi progression type.
+	 * @return the value of the currently active jedi progression type.
+	 */
+	int getJediProgressionType();
+
+	/**
+	 * Set the name of the currently active lua jedi manager.
+	 * @param name the name of the currently active lua jedi manager.
+	 */
+	void setJediManagerName(const String& name);
+
+	/**
+	 * Handle usage of any item related to the jedi progression.
+	 * @param item pointer to the item object.
+	 * @param itemType the type of item.
+	 * @param creature the creature that used the item.
+	 */
+	void useItem(SceneObject* item, const int itemType, CreatureObject* creature);
+
+	/**
+	 * Check for force skill prerequisites
+	 * @param creature the creature object.
+	 * @param skillName the name of the skill to check the prerequisite for
+	 */
+	bool canLearnSkill(CreatureObject* creature, const String& skillName);
+
+	/**
+	 * Check to ensure force skill prerequisites are maintained
+	 * @param creature the creature object.
+	 * @param skillName the name of the skill to be surrendered
+	 */
+	bool canSurrenderSkill(CreatureObject* creature, const String& skillName);
+
+	/**
+	 * Decides what to do next pending learning an FS tree.
+	 * Calls the onFSTreeCompleted in the lua manager.
+	 * @param creature the creature object.
+	 * @param branch String of the branch name.
+	 */
+	void onFSTreeCompleted(CreatureObject* creature, const String& branch);
+
+	/**
+	 * Login-time fixer to raise existing Jedi to the configured baseline if needed.
+	 * Implemented in JediManager.cpp.
+	 */
+	void applyBaselineIfNeeded(CreatureObject* creature);
 };
 
-}  // namespace jedi
-}  // namespace managers
-}  // namespace zone
-}  // namespace server
+}
+}
+}
+}
+
+using namespace server::zone::managers::jedi;
 
 #endif /* JEDIMANAGER_H_ */
