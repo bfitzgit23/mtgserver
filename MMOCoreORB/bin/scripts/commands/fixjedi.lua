@@ -1,18 +1,13 @@
 -- File: scripts/commands/fixjedi.lua
-AddCommand{
-  name = "fixjedi",
-  -- Do NOT add to combat queue; this is an admin utility
-  addToCombatQueue = false,
+-- Minimal Lua registration for the C++ FixJediCommand.
+-- The C++ implementation enforces admin level and handles target resolution.
+-- This Lua file simply exposes /fixjedi to the command loader.
 
-  -- Targeting for this admin command is handled in C++ (self or selected)
-  -- Use NONE here so the table parses cleanly
-  targetType = 0,
-
-  -- Basic defaults (not really used by our handler)
-  maxRangeToTarget = 0,
-  defaultTime = 0.0,
-  defaultPriority = 100,
-
-  -- Optional: prevent obviously invalid locomotions
-  invalidLocomotions = "dead,incapacitated"
+FixJediCommand = {
+    name = "fixjedi",
+    helpString = "Fix Jedi baseline HAM for yourself or your current target (Admin only)",
+    -- Not strictly required, but keeps help text consistent with your other admin tools:
+    requiresTarget = false -- target is optional; command will default to self
 }
+
+AddCommand(FixJediCommand)
