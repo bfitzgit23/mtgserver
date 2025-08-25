@@ -6,20 +6,25 @@
 #ifndef FIXJEDICOMMAND_H_
 #define FIXJEDICOMMAND_H_
 
-#include "server/zone/objects/scene/SceneObject.h"
-#include "server/zone/objects/creature/CreatureObject.h"
-#include "server/zone/objects/player/PlayerObject.h"
-#include "server/zone/ZoneProcessServer.h"
-// Fixed path:
 #include "server/zone/objects/creature/commands/QueueCommand.h"
+#include "system/lang/String.h"
 
+/**
+ * Admin-only command:
+ *   /fixjedi
+ *   /fixjedi self
+ *   /fixjedi <FirstName>
+ *
+ * Sets a “baseline” HAM for Jedi toons.
+ */
 class FixJediCommand : public QueueCommand {
 public:
     FixJediCommand(const String& name, ZoneProcessServer* server)
-        : QueueCommand(name, server) {
-    }
+        : QueueCommand(name, server) {}
 
-    int doQueueCommand(CreatureObject* creature, const uint64& target, const UnicodeString& arguments) const override;
+    virtual int doQueueCommand(CreatureObject* creature,
+                               const uint64& target,
+                               const UnicodeString& arguments) const;
 };
 
 #endif /* FIXJEDICOMMAND_H_ */
