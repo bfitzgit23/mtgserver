@@ -6,6 +6,7 @@
 #include "JediManager.h"
 #include "server/zone/managers/director/DirectorManager.h"
 #include "server/zone/objects/player/PlayerObject.h" // needed for setJediState()
+#include "server/zone/objects/scene/SceneObject.h"
 
 JediManager::JediManager() : Logger("JediManager") {
     jediProgressionType = NOJEDIPROGRESSION;
