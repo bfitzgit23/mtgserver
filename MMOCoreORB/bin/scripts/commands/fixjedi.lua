@@ -1,13 +1,18 @@
 -- File: scripts/commands/fixjedi.lua
+AddCommand{
+  name = "fixjedi",
+  -- Do NOT add to combat queue; this is an admin utility
+  addToCombatQueue = false,
 
-FixJediCommand = {
-    name = "fixjedi",
-    -- who can use it (0 = player, 1 = CSR, 2 = Dev, 15 = Admin)
-    permissionLevel = 15,
+  -- Targeting for this admin command is handled in C++ (self or selected)
+  -- Use NONE here so the table parses cleanly
+  targetType = 0,
 
-    -- syntax shown when someone uses /help fixjedi
-    helpString = "Fix Jedi HAM attributes for a target player or self",
-    requiresTarget = true
+  -- Basic defaults (not really used by our handler)
+  maxRangeToTarget = 0,
+  defaultTime = 0.0,
+  defaultPriority = 100,
+
+  -- Optional: prevent obviously invalid locomotions
+  invalidLocomotions = "dead,incapacitated"
 }
-
-AddCommand(FixJediCommand)
