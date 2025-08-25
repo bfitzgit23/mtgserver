@@ -8,10 +8,19 @@
 
 #include "server/zone/objects/creature/CreatureObject.h"
 
-// Forward declarations to avoid heavy includes in the header.
+// Forward declarations kept minimal and correctly scoped.
 class Lua;
 class Skill;
-class SceneObject;
+
+namespace server {
+namespace zone {
+namespace objects {
+namespace scene {
+class SceneObject; // <-- correct namespace for SceneObject
+}
+}
+}
+}
 
 namespace server {
 namespace zone {
@@ -128,7 +137,7 @@ public:
      * @param itemType the type of item.
      * @param creature the creature that used the item.
      */
-    void useItem(SceneObject* item, const int itemType, CreatureObject* creature);
+    void useItem(server::zone::objects::scene::SceneObject* item, const int itemType, CreatureObject* creature);
 
     /**
      * Check for force skill prerequisites
