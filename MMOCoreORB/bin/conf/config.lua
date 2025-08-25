@@ -241,7 +241,10 @@ Core3 = {
         ------TOS Config------
         TermsOfServiceVersion = 0,
         TermsOfService = "",
-        Core3.CommandConfigManager.DumpAdminCommands = true,
+            ------Command Config------
+        CommandConfigManager = {
+                DumpAdminCommands = 1
+        },
 }
 
 -- NOTE: conf/config-local.lua is parsed after this file if it exists
