@@ -76,16 +76,16 @@ void JediManager::loadConfiguration(Lua* luaEngine) {
 }
 
 void JediManager::onPlayerCreated(CreatureObject* creature) {
-    Lua* lua = DirectorManager::instance()->getLuaInstance();
-    Reference<LuaFunction*> luaOnPlayerCreated = lua->createFunction(getJediManagerName(), "onPlayerCreated", 0);
+    Lua* luaEngine = DirectorManager::instance()->getLuaInstance();
+    Reference<LuaFunction*> luaOnPlayerCreated = luaEngine->createFunction(getJediManagerName(), "onPlayerCreated", 0);
     *luaOnPlayerCreated << creature;
 
     luaOnPlayerCreated->callFunction();
 }
 
 void JediManager::onSkillRevoked(CreatureObject* creature, Skill* skill) {
-    Lua* lua = DirectorManager::instance()->getLuaInstance();
-    Reference<LuaFunction*> luaOnSkillRevoked = lua->createFunction(getJediManagerName(), "onSkillRevoked", 0);
+    Lua* luaEngine = DirectorManager::instance()->getLuaInstance();
+    Reference<LuaFunction*> luaOnSkillRevoked = luaEngine->createFunction(getJediManagerName(), "onSkillRevoked", 0);
     *luaOnSkillRevoked << creature;
     *luaOnSkillRevoked << skill;
 
@@ -93,8 +93,8 @@ void JediManager::onSkillRevoked(CreatureObject* creature, Skill* skill) {
 }
 
 void JediManager::onPlayerLoggedIn(CreatureObject* creature) {
-    Lua* lua = DirectorManager::instance()->getLuaInstance();
-    Reference<LuaFunction*> luaOnPlayerLoggedIn = lua->createFunction(getJediManagerName(), "onPlayerLoggedIn", 0);
+    Lua* luaEngine = DirectorManager::instance()->getLuaInstance();
+    Reference<LuaFunction*> luaOnPlayerLoggedIn = luaEngine->createFunction(getJediManagerName(), "onPlayerLoggedIn", 0);
     *luaOnPlayerLoggedIn << creature;
 
     luaOnPlayerLoggedIn->callFunction();
@@ -104,24 +104,24 @@ void JediManager::onPlayerLoggedIn(CreatureObject* creature) {
 }
 
 void JediManager::onPlayerLoggedOut(CreatureObject* creature) {
-    Lua* lua = DirectorManager::instance()->getLuaInstance();
-    Reference<LuaFunction*> luaOnPlayerLoggedOut = lua->createFunction(getJediManagerName(), "onPlayerLoggedOut", 0);
+    Lua* luaEngine = DirectorManager::instance()->getLuaInstance();
+    Reference<LuaFunction*> luaOnPlayerLoggedOut = luaEngine->createFunction(getJediManagerName(), "onPlayerLoggedOut", 0);
     *luaOnPlayerLoggedOut << creature;
 
     luaOnPlayerLoggedOut->callFunction();
 }
 
 void JediManager::checkForceStatusCommand(CreatureObject* creature) {
-    Lua* lua = DirectorManager::instance()->getLuaInstance();
-    Reference<LuaFunction*> luaCheckForceStatusCommand = lua->createFunction(getJediManagerName(), "checkForceStatusCommand", 0);
+    Lua* luaEngine = DirectorManager::instance()->getLuaInstance();
+    Reference<LuaFunction*> luaCheckForceStatusCommand = luaEngine->createFunction(getJediManagerName(), "checkForceStatusCommand", 0);
     *luaCheckForceStatusCommand << creature;
 
     luaCheckForceStatusCommand->callFunction();
 }
 
-void JediManager::useItem(SceneObject* item, const int itemType, CreatureObject* creature) {
-    Lua* lua = DirectorManager::instance()->getLuaInstance();
-    Reference<LuaFunction*> luaUseItem = lua->createFunction(getJediManagerName(), "useItem", 0);
+void JediManager::useItem(server::zone::objects::scene::SceneObject* item, const int itemType, CreatureObject* creature) {
+    Lua* luaEngine = DirectorManager::instance()->getLuaInstance();
+    Reference<LuaFunction*> luaUseItem = luaEngine->createFunction(getJediManagerName(), "useItem", 0);
     *luaUseItem << item;
     *luaUseItem << itemType;
     *luaUseItem << creature;
@@ -130,8 +130,8 @@ void JediManager::useItem(SceneObject* item, const int itemType, CreatureObject*
 }
 
 bool JediManager::canLearnSkill(CreatureObject* creature, const String& skillName) {
-    Lua* lua = DirectorManager::instance()->getLuaInstance();
-    Reference<LuaFunction*> luaStartTask = lua->createFunction(getJediManagerName(), "canLearnSkill", 1);
+    Lua* luaEngine = DirectorManager::instance()->getLuaInstance();
+    Reference<LuaFunction*> luaStartTask = luaEngine->createFunction(getJediManagerName(), "canLearnSkill", 1);
     *luaStartTask << creature;
     *luaStartTask << skillName;
 
@@ -145,8 +145,8 @@ bool JediManager::canLearnSkill(CreatureObject* creature, const String& skillNam
 }
 
 bool JediManager::canSurrenderSkill(CreatureObject* creature, const String& skillName) {
-    Lua* lua = DirectorManager::instance()->getLuaInstance();
-    Reference<LuaFunction*> luaStartTask = lua->createFunction(getJediManagerName(), "canSurrenderSkill", 1);
+    Lua* luaEngine = DirectorManager::instance()->getLuaInstance();
+    Reference<LuaFunction*> luaStartTask = luaEngine->createFunction(getJediManagerName(), "canSurrenderSkill", 1);
     *luaStartTask << creature;
     *luaStartTask << skillName;
 
@@ -160,8 +160,8 @@ bool JediManager::canSurrenderSkill(CreatureObject* creature, const String& skil
 }
 
 void JediManager::onFSTreeCompleted(CreatureObject* creature, const String& branch) {
-    Lua* lua = DirectorManager::instance()->getLuaInstance();
-    Reference<LuaFunction*> luaStartTask = lua->createFunction(getJediManagerName(), "onFSTreeCompleted", 0);
+    Lua* luaEngine = DirectorManager::instance()->getLuaInstance();
+    Reference<LuaFunction*> luaStartTask = luaEngine->createFunction(getJediManagerName(), "onFSTreeCompleted", 0);
     *luaStartTask << creature;
     *luaStartTask << branch;
 
@@ -233,7 +233,7 @@ void JediManager::applyBaselineIfNeeded(CreatureObject* creature) {
         creature->setObjVar("jedi.baselineFix1", 1);
 
         // Optional: lightweight notify to the player; comment out if you don't want chat spam
-        // creature->sendSystemMessage("@jedi:baseline_applied"); // if you have a string, else a raw string:
+        // creature->sendSystemMessage("@jedi:baseline_applied");
         // creature->sendSystemMessage("Jedi baseline stats applied.");
     }
 }
