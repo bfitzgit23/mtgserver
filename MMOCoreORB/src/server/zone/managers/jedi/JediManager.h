@@ -679,4 +679,3 @@ public:
 using namespace server::zone::managers::jedi;
 
 #endif /* JEDIMANAGER_H_ */
-#endif /* JEDIMANAGER_H_ */
