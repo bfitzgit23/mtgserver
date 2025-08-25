@@ -762,14 +762,14 @@ void PlayerCreationManager::addProfessionStartingItems(CreatureObject* creature,
     const bool isJediStart =
         profession.contains("jedi") || profession.contains("force_") || profession == "jedi_padawan";
 
-    if (isJediStart) {
-        // Order: 0..8 = Health, Action, Mind, Strength, Constitution, Quickness, Stamina, Intelligence, Presence
-        const int tanky[9] = { 1000, 850, 850, 65, 65, 55, 65, 55, 55 };
-        for (int i = 0; i < 9; ++i) {
-            creature->setBaseHAM(i, tanky[i], false);
-            creature->setHAM(i,      tanky[i], false);
-            creature->setMaxHAM(i,   tanky[i], false);
-        }
+ if (isJediStart) {
+    const int jediBrawler[9] = { 1100, 900, 650, 600, 600, 500, 500, 450, 450 };
+    for (int i = 0; i < 9; ++i) {
+        creature->setBaseHAM(i, jediBrawler[i], false);
+        creature->setHAM(i,      jediBrawler[i], false);
+        creature->setMaxHAM(i,   jediBrawler[i], false);
+    }
+}
     } else {
         for (int i = 0; i < 9; ++i) {
             int mod = professionData->getAttributeMod(i);
