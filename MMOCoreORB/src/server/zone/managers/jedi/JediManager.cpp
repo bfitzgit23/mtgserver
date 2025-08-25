@@ -95,6 +95,9 @@ void JediManager::onPlayerLoggedIn(CreatureObject* creature) {
 	*luaOnPlayerLoggedIn << creature;
 
 	luaOnPlayerLoggedIn->callFunction();
+
+	// Ensure existing Jedi get the baseline HAM if they predate the change.
+	applyBaselineIfNeeded(creature);
 }
 
 void JediManager::onPlayerLoggedOut(CreatureObject* creature) {
@@ -161,3 +164,57 @@ void JediManager::onFSTreeCompleted(CreatureObject* creature, const String& bran
 
 	luaStartTask->callFunction();
 }
+
+// --- Added: login-time fixer so existing Jedi get the new baseline on login ---
+void JediManager::applyBaselineIfNeeded(CreatureObject* creature) {
+	if (creature == nullptr || !creature->isPlayerCreature())
+		return;
+
+	// Heuristic: treat as Jedi if they have any core force skills or are flagged as Jedi
+	bool isJedi = false;
+
+	// Cheap checks that don't require string allocations if possible
+	if (creature->hasSkill("force_sensitive_novice") ||
+	    creature->hasSkill("force_discipline_light_saber_novice") ||
+	    creature->hasSkill("force_title_jedi_novice") ||
+	    creature->hasSkill("force_title_jedi_rank_01") ||
+	    creature->hasSkill("force_title_jedi_rank_02") ||
+	    creature->hasSkill("force_title_jedi_rank_03") ||
+	    creature->hasSkill("force_title_jedi_master")) {
+		isJedi = true;
+	}
+
+	if (!isJedi) {
+		// nothing to do
+		return;
+	}
+
+	// Target baseline we want for Jedi (brawler-leaning)
+	// Order: 0..8 = Health, Action, Mind, Strength, Constitution, Quickness, Stamina, Intelligence, Presence
+	const int target[9] = { 1100, 900, 650, 600, 600, 500, 500, 450, 450 };
+
+	bool changed = false;
+
+	for (int i = 0; i < 9; ++i) {
+		const int curBase = creature->getBaseHAM(i);
+		const int curMax  = creature->getMaxHAM(i);
+
+		// Only raise up if below our new floor; never reduce stats here.
+		if (curBase < target[i]) {
+			creature->setBaseHAM(i, target[i], false);
+			changed = true;
+		}
+		if (curMax < target[i]) {
+			creature->setMaxHAM(i, target[i], false);
+			changed = true;
+		}
+		// Clamp current HAM up to at least the new floor so players don't log in with red bars.
+		if (creature->getHAM(i) < target[i]) {
+			creature->setHAM(i, target[i], false);
+			changed = true;
+		}
+	}
+
+	if (changed) {
+		info() << "applyBaselineIfNeeded: raised Jedi baseline for OID=" << creature->getObjectID();
+	}
