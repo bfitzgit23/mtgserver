@@ -10,7 +10,8 @@
 #include "server/zone/objects/creature/CreatureObject.h"
 #include "server/zone/objects/player/PlayerObject.h"
 #include "server/zone/ZoneProcessServer.h"
-#include "server/zone/objects/scene/commands/QueueCommand.h"
+// Fixed path:
+#include "server/zone/objects/creature/commands/QueueCommand.h"
 
 class FixJediCommand : public QueueCommand {
 public:
