@@ -60,6 +60,10 @@ public:
 	 */
 	~JediManager();
 
+	// Login-time fixer to raise existing Jedi to the desired baseline if needed.
+	// Implemented in JediManager.cpp and called (e.g.) from onPlayerLoggedIn.
+	void applyBaselineIfNeeded(CreatureObject* creature);
+
 	/**
 	 * Load the Jedi Manager configuration.
 	 * @param luaEngine the lua engine to use for loading the configuration.
