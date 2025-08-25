@@ -24,7 +24,7 @@ voteChallengeCost = 1000
 
 maxPetitioners = 11
 maxChallenges = 20
-missedVotePenalty = 100 -- FRS XP
+missedVotePenalty = 0 -- FRS XP
 
 -- Restrict players from voting for and challenging other characters on their account
 sameAccountEnclaveRestrictions = 1
