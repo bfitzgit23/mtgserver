@@ -1,161 +1,206 @@
 /*
-				Copyright <SWGEmu>
-		See file COPYING for copying conditions.*/
+                Copyright <SWGEmu>
+        See file COPYING for copying conditions.
+*/
 
-#ifndef JEDIMANAGER_H_
-#define JEDIMANAGER_H_
+#include "JediManager.h"
+#include "server/zone/managers/director/DirectorManager.h"
+#include "server/zone/objects/player/PlayerObject.h" // needed for setJediState()
 
-#include "server/zone/objects/creature/CreatureObject.h"
+JediManager::JediManager() : Logger("JediManager") {
+    jediProgressionType = NOJEDIPROGRESSION;
+    setJediManagerName("JediManager");
+}
 
-namespace server {
-namespace zone {
-namespace managers {
-namespace jedi {
+JediManager::~JediManager() {
+
+}
+
+const String& JediManager::getJediManagerName() {
+    ReadLocker locker(this);
+
+    return jediManagerName;
+}
+
+int JediManager::getJediProgressionType() {
+    ReadLocker locker(this);
+
+    return jediProgressionType;
+}
+
+void JediManager::setJediManagerName(const String& name) {
+    Locker writeLock(this);
+
+    jediManagerName = name;
+}
+
+void JediManager::setupLuaValues(Lua* luaEngine) {
+    luaEngine->setGlobalInt("NOJEDIPROGRESSION", JediManager::NOJEDIPROGRESSION);
+    luaEngine->setGlobalInt("HOLOGRINDJEDIPROGRESSION", JediManager::HOLOGRINDJEDIPROGRESSION);
+    luaEngine->setGlobalInt("VILLAGEJEDIPROGRESSION", JediManager::VILLAGEJEDIPROGRESSION);
+    luaEngine->setGlobalInt("CUSTOMJEDIPROGRESSION", JediManager::CUSTOMJEDIPROGRESSION);
+    luaEngine->setGlobalInt("ITEMHOLOCRON", JediManager::ITEMHOLOCRON);
+    luaEngine->setGlobalInt("ITEMWAYPOINTDATAPAD", JediManager::ITEMWAYPOINTDATAPAD);
+    luaEngine->setGlobalInt("ITEMTHEATERDATAPAD", JediManager::ITEMTHEATERDATAPAD);
+}
+
+void JediManager::loadConfiguration(Lua* luaEngine) {
+    setupLuaValues(luaEngine);
+
+    luaEngine->runFile("scripts/managers/jedi/jedi_manager.lua");
+
+    jediProgressionType = luaEngine->getGlobalInt(String("jediProgressionType"));
+
+    switch (jediProgressionType) {
+    case HOLOGRINDJEDIPROGRESSION:
+        luaEngine->runFile("scripts/managers/jedi/hologrind_jedi_manager.lua");
+        break;
+    case VILLAGEJEDIPROGRESSION:
+        luaEngine->runFile("scripts/managers/jedi/village_jedi_manager.lua");
+        break;
+    case CUSTOMJEDIPROGRESSION:
+        luaEngine->runFile(luaEngine->getGlobalString("customJediProgressionFile"));
+        break;
+    default:
+        break;
+    }
+
+    if (loaded.compareAndSet(false, true)) {
+        auto managerName = luaEngine->getGlobalString(String("jediManagerName"));
+
+        setJediManagerName(managerName);
+    }
+
+    info() << Thread::getCurrentThread()->getName() <<  " loaded.";
+}
+
+void JediManager::onPlayerCreated(CreatureObject* creature) {
+    Lua* lua = DirectorManager::instance()->getLuaInstance();
+    Reference<LuaFunction*> luaOnPlayerCreated = lua->createFunction(getJediManagerName(), "onPlayerCreated", 0);
+    *luaOnPlayerCreated << creature;
+
+    luaOnPlayerCreated->callFunction();
+}
+
+void JediManager::onSkillRevoked(CreatureObject* creature, Skill* skill) {
+    Lua* lua = DirectorManager::instance()->getLuaInstance();
+    Reference<LuaFunction*> luaOnSkillRevoked = lua->createFunction(getJediManagerName(), "onSkillRevoked", 0);
+    *luaOnSkillRevoked << creature;
+    *luaOnSkillRevoked << skill;
+
+    luaOnSkillRevoked->callFunction();
+}
+
+void JediManager::onPlayerLoggedIn(CreatureObject* creature) {
+    Lua* lua = DirectorManager::instance()->getLuaInstance();
+    Reference<LuaFunction*> luaOnPlayerLoggedIn = lua->createFunction(getJediManagerName(), "onPlayerLoggedIn", 0);
+    *luaOnPlayerLoggedIn << creature;
+
+    luaOnPlayerLoggedIn->callFunction();
+
+    // Baseline fixer runs at login for existing Jedi
+    applyBaselineIfNeeded(creature);
+}
+
+void JediManager::onPlayerLoggedOut(CreatureObject* creature) {
+    Lua* lua = DirectorManager::instance()->getLuaInstance();
+    Reference<LuaFunction*> luaOnPlayerLoggedOut = lua->createFunction(getJediManagerName(), "onPlayerLoggedOut", 0);
+    *luaOnPlayerLoggedOut << creature;
+
+    luaOnPlayerLoggedOut->callFunction();
+}
+
+void JediManager::checkForceStatusCommand(CreatureObject* creature) {
+    Lua* lua = DirectorManager::instance()->getLuaInstance();
+    Reference<LuaFunction*> luaCheckForceStatusCommand = lua->createFunction(getJediManagerName(), "checkForceStatusCommand", 0);
+    *luaCheckForceStatusCommand << creature;
+
+    luaCheckForceStatusCommand->callFunction();
+}
+
+void JediManager::useItem(SceneObject* item, const int itemType, CreatureObject* creature) {
+    Lua* lua = DirectorManager::instance()->getLuaInstance();
+    Reference<LuaFunction*> luaUseItem = lua->createFunction(getJediManagerName(), "useItem", 0);
+    *luaUseItem << item;
+    *luaUseItem << itemType;
+    *luaUseItem << creature;
+
+    luaUseItem->callFunction();
+}
+
+bool JediManager::canLearnSkill(CreatureObject* creature, const String& skillName) {
+    Lua* lua = DirectorManager::instance()->getLuaInstance();
+    Reference<LuaFunction*> luaStartTask = lua->createFunction(getJediManagerName(), "canLearnSkill", 1);
+    *luaStartTask << creature;
+    *luaStartTask << skillName;
+
+    lua_State* L = luaStartTask->callFunction();
+
+    bool result = lua_toboolean(L, -1);
+
+    lua_pop(L, 1);
+
+    return result;
+}
+
+bool JediManager::canSurrenderSkill(CreatureObject* creature, const String& skillName) {
+    Lua* lua = DirectorManager::instance()->getLuaInstance();
+    Reference<LuaFunction*> luaStartTask = lua->createFunction(getJediManagerName(), "canSurrenderSkill", 1);
+    *luaStartTask << creature;
+    *luaStartTask << skillName;
+
+    lua_State* L = luaStartTask->callFunction();
+
+    bool result = lua_toboolean(L, -1);
+
+    lua_pop(L, 1);
+
+    return result;
+}
+
+void JediManager::onFSTreeCompleted(CreatureObject* creature, const String& branch) {
+    Lua* lua = DirectorManager::instance()->getLuaInstance();
+    Reference<LuaFunction*> luaStartTask = lua->createFunction(getJediManagerName(), "onFSTreeCompleted", 0);
+    *luaStartTask << creature;
+    *luaStartTask << branch;
+
+    luaStartTask->callFunction();
+}
 
 /**
- * Singleton class with a common interface for all different Jedi progression systems.
+ * Login-time fixer to raise existing Jedi to your baseline if needed.
  */
-class JediManager : public Singleton<JediManager>, public Logger, public Object, public ReadWriteLock {
-private:
-	/**
-	 * The Jedi progression type currently configured.
-	 */
-	AtomicInteger jediProgressionType;
+void JediManager::applyBaselineIfNeeded(CreatureObject* creature) {
+    if (creature == nullptr || !creature->isPlayerCreature())
+        return;
 
-	/**
-	 * The name of the jedi manager class in Lua.
-	 */
-	String jediManagerName;
+    ManagedReference<PlayerObject*> ghost = creature->getPlayerObject();
+    if (ghost == nullptr)
+        return;
 
-	AtomicBoolean loaded{false};
+    const bool looksJedi =
+        creature->hasSkill("force_title_jedi_novice") ||
+        creature->hasSkill("jedi_padawan") ||
+        creature->hasSkill("force_sensitive_novice") ||
+        creature->hasSkill("force_discipline_light_saber_novice");
 
-	/**
-	 * Setup Lua global values.
-	 * @param luaEngine the lua instance.
-	 */
-	static void setupLuaValues(Lua* luaEngine);
+    if (!looksJedi)
+        return;
 
-public:
+    try {
+        ghost->setJediState(4);
+    } catch (...) {
+        // ignore if not present
+    }
 
-	enum {
-		NOJEDIPROGRESSION,         // Jedi progression not available.
-		HOLOGRINDJEDIPROGRESSION,  // Jedi progression through the hologrind system, i.e. master five random professions.
-		VILLAGEJEDIPROGRESSION,    // Jedi progression through the village system.
-		CUSTOMJEDIPROGRESSION      // Custom defined jedi progression system.
-	};
+    const int target[9] = { 1100, 900, 650, 600, 600, 500, 500, 450, 450 };
 
-	enum {
-		ITEMHOLOCRON,         // Item type holocron.
-		ITEMWAYPOINTDATAPAD,  // Item type waypoint datapad.
-		ITEMTHEATERDATAPAD    // ITEMTHEATERDATAPAD
-	};
-
-	/**
-	 * Constructor for the Jedi Manager.
-	 */
-	JediManager();
-
-	/**
-	 * Destructor for the Jedi Manager.
-	 */
-	~JediManager();
-
-	// Login-time fixer to raise existing Jedi to the desired baseline if needed.
-	// Implemented in JediManager.cpp and called (e.g.) from onPlayerLoggedIn.
-	void applyBaselineIfNeeded(CreatureObject* creature);
-
-	/**
-	 * Load the Jedi Manager configuration.
-	 * @param luaEngine the lua engine to use for loading the configuration.
-	 */
-	void loadConfiguration(Lua* luaEngine);
-
-	/**
-	 * On player created.
-	 * @param creature the creature/player that was created.
-	 */
-	void onPlayerCreated(CreatureObject* creature);
-
-	/**
-	 * On player logged in.
-	 * @param creature the creature/player that logged in.
-	 */
-	void onPlayerLoggedIn(CreatureObject* creature);
-
-	/**
-	 * On player logged out.
-	 * @param creature the creature/player that logged out.
-	 */
-	void onPlayerLoggedOut(CreatureObject* creature);
-
-	/**
-	 * On player skill revoked.
-	 * @param creature the creature/player that revoked a skill
-	 * @param skill the skill that was revoked
-	 */
-	void onSkillRevoked(CreatureObject* creature, Skill* skill);
-
-	/**
-	 * Check force status command.
-	 * Calls the checkForceStatusCommand in the lua manager.
-	 * @param creature the creature that performed the command.
-	 */
-	void checkForceStatusCommand(CreatureObject* creature);
-
-	/**
-	 * Get the name of the currently active lua jedi manager.
-	 * @return the name of the currently active lua jedi manager.
-	 */
-	const String& getJediManagerName();
-
-	/**
-	 * Get the value of the currently active jedi progression type.
-	 * @return the value of the currently active jedi progression type.
-	 */
-	int getJediProgressionType();
-
-	/**
-	 * Set the name of the currently active lua jedi manager.
-	 * @param name the name of the currently active lua jedi manager.
-	 */
-	void setJediManagerName(const String& name);
-
-	/**
-	 * Handle usage of any item related to the jedi progression.
-	 * @param item pointer to the item object.
-	 * @param itemType the type of item.
-	 * @param creature the creature that used the item.
-	 */
-	void useItem(SceneObject* item, const int itemType, CreatureObject* creature);
-
-	/**
-	 * Check for force skill prerequisites
-	 * @param creature the creature object.
-	 * @param skillName the name of the skill to check the prerequisite for
-	 */
-	bool canLearnSkill(CreatureObject* creature, const String& skillName);
-
-	/**
-	 * Check to ensure force skill prerequisites are maintained
-	 * @param creature the creature object.
-	 * @param skillName the name of the skill to be surrendered
-	 */
-	bool canSurrenderSkill(CreatureObject* creature, const String& skillName);
-
-	/**
-	 * Decides what to do next pending learning an FS tree.
-	 * Calls the onFSTreeCompleted in the lua manager.
-	 * @param creature the creature object.
-	 * @param branch String of the branch name.
-	 */
-	void onFSTreeCompleted(CreatureObject* creature, const String& branch);
-};
-
+    for (int i = 0; i < 9; ++i) {
+        int curMax = creature->getMaxHAM(i);
+        if (curMax < target[i]) {
+            creature->setBaseHAM(i, target[i], false);
+            creature->setHAM(i,      target[i], false);
+            creature->setMaxHAM(i,   target[i], false);
+        }
+    }
 }
-}
-}
-}
-
-using namespace server::zone::managers::jedi;
-
-#endif /* JEDIMANAGER_H_ */
