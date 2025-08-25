@@ -1,10 +1,11 @@
 /*
                 Copyright <SWGEmu>
-        See file COPYING for copying conditions.*/
+        See file COPYING for copying conditions.
+*/
 
 #include "JediManager.h"
 #include "server/zone/managers/director/DirectorManager.h"
-// No SkillManager includes needed; we query skills via CreatureObject
+#include "server/zone/objects/player/PlayerObject.h" // needed for setJediState()
 
 JediManager::JediManager() : Logger("JediManager") {
     jediProgressionType = NOJEDIPROGRESSION;
@@ -97,7 +98,7 @@ void JediManager::onPlayerLoggedIn(CreatureObject* creature) {
 
     luaOnPlayerLoggedIn->callFunction();
 
-    // Also run the baseline fixer at login for existing Jedi.
+    // Baseline fixer runs at login for existing Jedi
     applyBaselineIfNeeded(creature);
 }
 
@@ -168,7 +169,6 @@ void JediManager::onFSTreeCompleted(CreatureObject* creature, const String& bran
 
 /**
  * Login-time fixer to raise existing Jedi to your baseline if needed.
- * This avoids calling non-existent helpers and only touches HAM if below target.
  */
 void JediManager::applyBaselineIfNeeded(CreatureObject* creature) {
     if (creature == nullptr || !creature->isPlayerCreature())
@@ -178,7 +178,6 @@ void JediManager::applyBaselineIfNeeded(CreatureObject* creature) {
     if (ghost == nullptr)
         return;
 
-    // Consider a toon "Jedi" if they have any of the expected force/jedi starter lines.
     const bool looksJedi =
         creature->hasSkill("force_title_jedi_novice") ||
         creature->hasSkill("jedi_padawan") ||
@@ -188,16 +187,12 @@ void JediManager::applyBaselineIfNeeded(CreatureObject* creature) {
     if (!looksJedi)
         return;
 
-    // Make sure they can use sabers, etc.
-    // (4 is a permissive Jedi state on most cores; adjust if your core differs.)
     try {
         ghost->setJediState(4);
     } catch (...) {
-        // best-effort; ignore if not present on your fork
+        // ignore if not present
     }
 
-    // Target baseline (same as "Jedi Brawler" starting baseline you wanted)
-    // Index order: 0..8 = Health, Action, Mind, Strength, Constitution, Quickness, Stamina, Intelligence, Presence
     const int target[9] = { 1100, 900, 650, 600, 600, 500, 500, 450, 450 };
 
     for (int i = 0; i < 9; ++i) {
@@ -208,6 +203,4 @@ void JediManager::applyBaselineIfNeeded(CreatureObject* creature) {
             creature->setMaxHAM(i,   target[i], false);
         }
     }
-
-    // No calls to refresh/recalc (not present on your fork). Values take effect immediately.
 }
