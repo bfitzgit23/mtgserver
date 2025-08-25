@@ -5,8 +5,8 @@
 
 #include "JediManager.h"
 #include "server/zone/managers/director/DirectorManager.h"
-#include "server/zone/objects/player/PlayerObject.h" // needed for get/setJediState()
-#include "server/zone/objects/scene/SceneObject.h"
+#include "server/zone/objects/player/PlayerObject.h"    // for get/setJediState
+#include "server/zone/objects/scene/SceneObject.h"      // for useItem()
 
 JediManager::JediManager() : Logger("JediManager") {
     jediProgressionType = NOJEDIPROGRESSION;
@@ -14,7 +14,6 @@ JediManager::JediManager() : Logger("JediManager") {
 }
 
 JediManager::~JediManager() {
-
 }
 
 const String& JediManager::getJediManagerName() {
@@ -73,60 +72,60 @@ void JediManager::loadConfiguration(Lua* luaEngine) {
 
 void JediManager::onPlayerCreated(CreatureObject* creature) {
     Lua* luaEngine = DirectorManager::instance()->getLuaInstance();
-    Reference<LuaFunction*> luaOnPlayerCreated = luaEngine->createFunction(getJediManagerName(), "onPlayerCreated", 0);
-    *luaOnPlayerCreated << creature;
-    luaOnPlayerCreated->callFunction();
+    Reference<LuaFunction*> fn = luaEngine->createFunction(getJediManagerName(), "onPlayerCreated", 0);
+    *fn << creature;
+    fn->callFunction();
 }
 
 void JediManager::onSkillRevoked(CreatureObject* creature, Skill* skill) {
     Lua* luaEngine = DirectorManager::instance()->getLuaInstance();
-    Reference<LuaFunction*> luaOnSkillRevoked = luaEngine->createFunction(getJediManagerName(), "onSkillRevoked", 0);
-    *luaOnSkillRevoked << creature;
-    *luaOnSkillRevoked << skill;
-    luaOnSkillRevoked->callFunction();
+    Reference<LuaFunction*> fn = luaEngine->createFunction(getJediManagerName(), "onSkillRevoked", 0);
+    *fn << creature;
+    *fn << skill;
+    fn->callFunction();
 }
 
 void JediManager::onPlayerLoggedIn(CreatureObject* creature) {
     Lua* luaEngine = DirectorManager::instance()->getLuaInstance();
-    Reference<LuaFunction*> luaOnPlayerLoggedIn = luaEngine->createFunction(getJediManagerName(), "onPlayerLoggedIn", 0);
-    *luaOnPlayerLoggedIn << creature;
-    luaOnPlayerLoggedIn->callFunction();
+    Reference<LuaFunction*> fn = luaEngine->createFunction(getJediManagerName(), "onPlayerLoggedIn", 0);
+    *fn << creature;
+    fn->callFunction();
 
-    // Baseline fixer runs at login for existing Jedi
+    // Idempotent baseline fixer for existing Jedi
     applyBaselineIfNeeded(creature);
 }
 
 void JediManager::onPlayerLoggedOut(CreatureObject* creature) {
     Lua* luaEngine = DirectorManager::instance()->getLuaInstance();
-    Reference<LuaFunction*> luaOnPlayerLoggedOut = luaEngine->createFunction(getJediManagerName(), "onPlayerLoggedOut", 0);
-    *luaOnPlayerLoggedOut << creature;
-    luaOnPlayerLoggedOut->callFunction();
+    Reference<LuaFunction*> fn = luaEngine->createFunction(getJediManagerName(), "onPlayerLoggedOut", 0);
+    *fn << creature;
+    fn->callFunction();
 }
 
 void JediManager::checkForceStatusCommand(CreatureObject* creature) {
     Lua* luaEngine = DirectorManager::instance()->getLuaInstance();
-    Reference<LuaFunction*> luaCheckForceStatusCommand = luaEngine->createFunction(getJediManagerName(), "checkForceStatusCommand", 0);
-    *luaCheckForceStatusCommand << creature;
-    luaCheckForceStatusCommand->callFunction();
+    Reference<LuaFunction*> fn = luaEngine->createFunction(getJediManagerName(), "checkForceStatusCommand", 0);
+    *fn << creature;
+    fn->callFunction();
 }
 
-// NOTE: unqualified SceneObject* to match the .h
+// NOTE: unqualified SceneObject* to match the header
 void JediManager::useItem(SceneObject* item, const int itemType, CreatureObject* creature) {
     Lua* luaEngine = DirectorManager::instance()->getLuaInstance();
-    Reference<LuaFunction*> luaUseItem = luaEngine->createFunction(getJediManagerName(), "useItem", 0);
-    *luaUseItem << item;
-    *luaUseItem << itemType;
-    *luaUseItem << creature;
-    luaUseItem->callFunction();
+    Reference<LuaFunction*> fn = luaEngine->createFunction(getJediManagerName(), "useItem", 0);
+    *fn << item;
+    *fn << itemType;
+    *fn << creature;
+    fn->callFunction();
 }
 
 bool JediManager::canLearnSkill(CreatureObject* creature, const String& skillName) {
     Lua* luaEngine = DirectorManager::instance()->getLuaInstance();
-    Reference<LuaFunction*> luaStartTask = luaEngine->createFunction(getJediManagerName(), "canLearnSkill", 1);
-    *luaStartTask << creature;
-    *luaStartTask << skillName;
+    Reference<LuaFunction*> fn = luaEngine->createFunction(getJediManagerName(), "canLearnSkill", 1);
+    *fn << creature;
+    *fn << skillName;
 
-    lua_State* L = luaStartTask->callFunction();
+    lua_State* L = fn->callFunction();
     bool result = lua_toboolean(L, -1);
     lua_pop(L, 1);
     return result;
@@ -134,11 +133,11 @@ bool JediManager::canLearnSkill(CreatureObject* creature, const String& skillNam
 
 bool JediManager::canSurrenderSkill(CreatureObject* creature, const String& skillName) {
     Lua* luaEngine = DirectorManager::instance()->getLuaInstance();
-    Reference<LuaFunction*> luaStartTask = luaEngine->createFunction(getJediManagerName(), "canSurrenderSkill", 1);
-    *luaStartTask << creature;
-    *luaStartTask << skillName;
+    Reference<LuaFunction*> fn = luaEngine->createFunction(getJediManagerName(), "canSurrenderSkill", 1);
+    *fn << creature;
+    *fn << skillName;
 
-    lua_State* L = luaStartTask->callFunction();
+    lua_State* L = fn->callFunction();
     bool result = lua_toboolean(L, -1);
     lua_pop(L, 1);
     return result;
@@ -146,113 +145,62 @@ bool JediManager::canSurrenderSkill(CreatureObject* creature, const String& skil
 
 void JediManager::onFSTreeCompleted(CreatureObject* creature, const String& branch) {
     Lua* luaEngine = DirectorManager::instance()->getLuaInstance();
-    Reference<LuaFunction*> luaStartTask = luaEngine->createFunction(getJediManagerName(), "onFSTreeCompleted", 0);
-    *luaStartTask << creature;
-    *luaStartTask << branch;
-    luaStartTask->callFunction();
+    Reference<LuaFunction*> fn = luaEngine->createFunction(getJediManagerName(), "onFSTreeCompleted", 0);
+    *fn << creature;
+    *fn << branch;
+    fn->callFunction();
 }
 
 /**
  * Login-time fixer to raise existing Jedi to your baseline if needed.
- * One-time via storedInt guard "jedi.baselineFix2".
- * Also logs decisions and nudges posture to refresh client HAM display.
+ * Idempotent by only raising pools when below target (no stored-int/objvar needed).
  */
 void JediManager::applyBaselineIfNeeded(CreatureObject* creature) {
-    if (creature == nullptr || !creature->isPlayerCreature()) {
-        info() << "[JediFix] Skip: null/not player.";
+    if (creature == nullptr || !creature->isPlayerCreature())
         return;
-    }
-
-    String who;
-    try { who = creature->getFirstName(); } catch (...) {}
-    if (who.isEmpty()) who = String::valueOf(creature->getObjectID());
 
     ManagedReference<PlayerObject*> ghost = creature->getPlayerObject();
-    if (ghost == nullptr) {
-        info() << "[JediFix] " << who << ": Skip (no PlayerObject).";
+    if (ghost == nullptr)
         return;
-    }
 
-    // One-time guard (stored int is widely available across forks)
-    try {
-        if (creature->getStoredInt("jedi.baselineFix2") == 1) {
-            info() << "[JediFix] " << who << ": Already applied. Skip.";
-            return;
-        }
-    } catch (...) { /* if storedInt not present, we’ll just proceed idempotently */ }
-
-    // Robust Jedi detection
+    // Detect Jedi robustly: state or fallback to skills
     bool isJedi = false;
-    int jediState = 0;
-    try { jediState = ghost->getJediState(); } catch (...) {}
-    if (jediState > 0) isJedi = true;
-
-    const char* skillChecks[] = {
-        "jedi_padawan",
-        "force_sensitive_novice",
-        "force_title_jedi_novice",
-        "force_title_jedi_master",
-        "force_discipline_light_saber_novice",
-        "force_discipline_lightsaber_novice",
-        "force_ability_melee_defense_01",
-        "force_ability_melee_defense_02"
-    };
-
-    if (!isJedi) {
-        for (auto s : skillChecks) {
-            try {
-                if (creature->hasSkill(s)) {
-                    isJedi = true;
-                    break;
-                }
-            } catch (...) {}
-        }
-    }
-
-    if (!isJedi) {
-        info() << "[JediFix] " << who << ": Not detected as Jedi (state=" << jediState << ").";
-        return;
-    }
-
-    // Ensure state is permissive (best-effort)
     try {
-        if (jediState < 4) {
+        isJedi = (ghost->getJediState() > 0);
+    } catch (...) {
+        // getJediState may not exist on some forks
+    }
+
+    if (!isJedi) {
+        isJedi =
+            creature->hasSkill("force_title_jedi_novice") ||
+            creature->hasSkill("jedi_padawan") ||
+            creature->hasSkill("force_sensitive_novice") ||
+            creature->hasSkill("force_discipline_light_saber_novice") ||
+            creature->hasSkill("force_discipline_lightsaber_novice"); // alt naming on some forks
+    }
+
+    if (!isJedi)
+        return;
+
+    // Ensure state is set if your fork uses it (best-effort)
+    try {
+        if (ghost->getJediState() < 4)
             ghost->setJediState(4);
-            info() << "[JediFix] " << who << ": JediState -> 4";
-        }
-    } catch (...) {}
+    } catch (...) { }
 
     // Target baseline (pool order 0..8 in Core3 HAM arrays)
     static const int target[9] = { 1100, 900, 650, 600, 600, 500, 500, 450, 450 };
 
-    // WRITE LOCK while mutating creature stats
+    // WRITE LOCK while mutating creature stats (single-arg Locker on your fork)
     Locker _lock(creature);
 
-    bool changed = false;
     for (int i = 0; i < 9; ++i) {
         const int curMax = creature->getMaxHAM(i);
         if (curMax < target[i]) {
             creature->setBaseHAM(i, target[i], false);
             creature->setHAM(i,      target[i], false);
             creature->setMaxHAM(i,   target[i], false);
-            changed = true;
         }
     }
-
-    if (!changed) {
-        info() << "[JediFix] " << who << ": Already >= baseline. No changes.";
-        return;
-    }
-
-    // Mark one-time application if available
-    try { creature->setStoredInt("jedi.baselineFix2", 1); } catch (...) {}
-
-    // Light refresh so client sees updated pools
-    try {
-        auto posture = creature->getPosture();
-        creature->setPosture(posture, true); // often forces client update
-    } catch (...) {}
-
-    info() << "[JediFix] " << who << ": Baseline applied (>= "
-           << target[0] << "/" << target[1] << "/" << target[2] << ").";
 }
