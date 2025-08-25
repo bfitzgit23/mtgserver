@@ -446,7 +446,7 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
                 }
             }
 
-            // 5) Make sure the toon isn't in underwear — auto-equip a basic outfit.
+            // 5) Auto-equip a basic outfit (robe if available, otherwise basics)
             auto tryEquip = [&](const String& tpl) {
                 ManagedReference<SceneObject*> obj = nullptr;
                 try { obj = zoneServer->createObject(tpl.hashCode(), 1); } catch (...) {}
@@ -456,7 +456,7 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
                 if (playerCreature->canAddObject(obj, /*equipped container*/4, err) == 0) {
                     playerCreature->transferObject(obj, 4, false);
                 } else {
-                    // If equip fails (species/gender restriction), try inventory so the player can equip later
+                    // fallback to inventory
                     if (SceneObject* inv = playerCreature->getSlottedObject("inventory")) {
                         if (!inv->transferObject(obj, -1, false)) {
                             obj->destroyObjectFromDatabase(true);
@@ -467,15 +467,10 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
                 }
             };
 
-            // Try a robe first (if present in your TREs)
             tryEquip("object/tangible/wearables/robe/robe_jedi_light_s01.iff");
-
-            // Fallback basic outfit that exists on most cores
             tryEquip("object/tangible/wearables/shirt/shirt_s08.iff");
             tryEquip("object/tangible/wearables/pants/pants_s01.iff");
             tryEquip("object/tangible/wearables/boots/boots_s01.iff");
-
-            // Bonus: bandolier often wearable by Wookiees and others
             tryEquip("object/tangible/wearables/bandolier/bandolier_s01.iff");
         }
     }
@@ -614,7 +609,7 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 
     client->addCharacter(playerCreature->getObjectID(), zoneServer->getGalaxyID());
 
-    // Jedi creation hook
+    // *** Use the JediManager singleton (your core doesn't expose ZoneServer::getJediManager)
     JediManager::instance()->onPlayerCreated(playerCreature);
 
     // === Custom Welcome Mail ===
@@ -758,18 +753,18 @@ void PlayerCreationManager::addProfessionStartingItems(CreatureObject* creature,
     SkillManager::instance()->awardSkill(startingSkill->getSkillName(), creature, false, true, true);
 
     // Set the hams.
-    // [PATCH] Tanky Jedi: if starter profession is Jedi, use tanky presets instead of defaults.
+    // Jedi-Brawler leaning stats if starting as Jedi
     const bool isJediStart =
         profession.contains("jedi") || profession.contains("force_") || profession == "jedi_padawan";
 
- if (isJediStart) {
-    const int jediBrawler[9] = { 1100, 900, 650, 600, 600, 500, 500, 450, 450 };
-    for (int i = 0; i < 9; ++i) {
-        creature->setBaseHAM(i, jediBrawler[i], false);
-        creature->setHAM(i,      jediBrawler[i], false);
-        creature->setMaxHAM(i,   jediBrawler[i], false);
-    }
-}
+    if (isJediStart) {
+        // Order: 0..8 = Health, Action, Mind, Strength, Constitution, Quickness, Stamina, Intelligence, Presence
+        const int jediBrawler[9] = { 1100, 900, 650, 600, 600, 500, 500, 450, 450 };
+        for (int i = 0; i < 9; ++i) {
+            creature->setBaseHAM(i, jediBrawler[i], false);
+            creature->setHAM(i,      jediBrawler[i], false);
+            creature->setMaxHAM(i,   jediBrawler[i], false);
+        }
     } else {
         for (int i = 0; i < 9; ++i) {
             int mod = professionData->getAttributeMod(i);
