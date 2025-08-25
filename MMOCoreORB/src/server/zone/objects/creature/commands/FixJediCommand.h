@@ -1,30 +1,19 @@
 /*
-    Copyright <SWGEmu>
-    See file COPYING for copying conditions.
+    SWGEmu Core3 - FixJediCommand (header)
+    Declares /fixjedi GM command
 */
 
-#ifndef FIXJEDICOMMAND_H_
-#define FIXJEDICOMMAND_H_
+#pragma once
 
 #include "server/zone/objects/creature/commands/QueueCommand.h"
-#include "system/lang/String.h"
+#include "server/zone/ZoneProcessServer.h"
 
-/**
- * Admin-only command:
- *   /fixjedi
- *   /fixjedi self
- *   /fixjedi <FirstName>
- *
- * Sets a “baseline” HAM for Jedi toons.
- */
 class FixJediCommand : public QueueCommand {
 public:
-    FixJediCommand(const String& name, ZoneProcessServer* server)
-        : QueueCommand(name, server) {}
+    // Only declared here, implemented in FixJediCommand.cpp
+    FixJediCommand(const String& name, ZoneProcessServer* server);
 
-    virtual int doQueueCommand(CreatureObject* creature,
-                               const uint64& target,
-                               const UnicodeString& arguments) const;
+    int doQueueCommand(CreatureObject* creature,
+                       const uint64& targetID,
+                       const UnicodeString& arguments) const override;
 };
-
-#endif /* FIXJEDICOMMAND_H_ */
