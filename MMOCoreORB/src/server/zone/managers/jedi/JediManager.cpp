@@ -169,6 +169,7 @@ void JediManager::onFSTreeCompleted(CreatureObject* creature, const String& bran
 
 /**
  * Login-time fixer to raise existing Jedi to your baseline if needed.
+ * Idempotent via objVar: "jedi.baselineFix1"
  */
 void JediManager::applyBaselineIfNeeded(CreatureObject* creature) {
     if (creature == nullptr || !creature->isPlayerCreature())
@@ -178,29 +179,60 @@ void JediManager::applyBaselineIfNeeded(CreatureObject* creature) {
     if (ghost == nullptr)
         return;
 
-    const bool looksJedi =
-        creature->hasSkill("force_title_jedi_novice") ||
-        creature->hasSkill("jedi_padawan") ||
-        creature->hasSkill("force_sensitive_novice") ||
-        creature->hasSkill("force_discipline_light_saber_novice");
-
-    if (!looksJedi)
+    // Skip if already applied in the past
+    if (creature->hasObjVar("jedi.baselineFix1"))
         return;
 
+    // Detect Jedi robustly: state or fallback to skills
+    bool isJedi = false;
     try {
-        ghost->setJediState(4);
+        isJedi = (ghost->getJediState() > 0);
     } catch (...) {
-        // ignore if not present
+        // some forks may not expose getJediState
     }
 
-    const int target[9] = { 1100, 900, 650, 600, 600, 500, 500, 450, 450 };
+    if (!isJedi) {
+        isJedi =
+            creature->hasSkill("force_title_jedi_novice") ||
+            creature->hasSkill("jedi_padawan") ||
+            creature->hasSkill("force_sensitive_novice") ||
+            creature->hasSkill("force_discipline_light_saber_novice");
+    }
 
+    if (!isJedi)
+        return;
+
+    // Ensure state is set if your fork uses it
+    try {
+        if (ghost->getJediState() < 4)
+            ghost->setJediState(4);
+    } catch (...) {
+        // ignore if not present on your fork
+    }
+
+    // Target baseline (pool order 0..8 in Core3 HAM arrays)
+    static const int target[9] = { 1100, 900, 650, 600, 600, 500, 500, 450, 450 };
+
+    // WRITE LOCK while mutating creature stats (thread-safe)
+    Locker _writeLock(creature, true);
+
+    bool changed = false;
     for (int i = 0; i < 9; ++i) {
         int curMax = creature->getMaxHAM(i);
         if (curMax < target[i]) {
             creature->setBaseHAM(i, target[i], false);
             creature->setHAM(i,      target[i], false);
             creature->setMaxHAM(i,   target[i], false);
+            changed = true;
         }
+    }
+
+    if (changed) {
+        // mark one-time application to avoid re-running every login
+        creature->setObjVar("jedi.baselineFix1", 1);
+
+        // Optional: lightweight notify to the player; comment out if you don't want chat spam
+        // creature->sendSystemMessage("@jedi:baseline_applied"); // if you have a string, else a raw string:
+        // creature->sendSystemMessage("Jedi baseline stats applied.");
     }
 }
