@@ -345,20 +345,20 @@ void CommandConfigManager::registerSpecialCommands(CommandList* sCommands) {
 	QueueCommand* admin = new AdminCommand("admin", server);
 	slashCommands->put(admin);
 
-	// Fri Oct  7 17:09:26 PDT 2011 - Karl Bunch <karlbunch@karlbunch.com>
-	// Turns out this isn't in the base datatables/command/command_tables_shared.iff file
-	// Meanwhile the client sends this to the server as part of the /logout command sequence
+	// /logout special-case
 	QueueCommand* slashCommand = createCommand(String("logout").toLowerCase());
-
 	if (slashCommand == nullptr) {
 		error("Could not create command /logout");
 	}
 
-	    QueueCommand* fixJediSlash = createCommand(String("fixjedi").toLowerCase());
-    if (fixJediSlash == nullptr) {
-        error("Could not create command /fixjedi");
-    }
-	
+	// --- FIX: register FixJedi factory BEFORE creating the slash command
+	commandFactory.registerCommand<FixJediCommand>(String("fixjedi").toLowerCase());
+
+	QueueCommand* fixJediSlash = createCommand(String("fixjedi").toLowerCase());
+	if (fixJediSlash == nullptr) {
+		error("Could not create command /fixjedi");
+	}
+
 	createCommand(String("mildPoison").toLowerCase())->setCommandGroup(0xe1c9a54a);
 	createCommand(String("strongPoison").toLowerCase())->setCommandGroup(0xe1c9a54a);
 
@@ -419,6 +419,7 @@ void CommandConfigManager::registerGlobals() {
 	setGlobalLong("BERSERK_STATE", CreatureState::BERSERK);
 	setGlobalLong("FEIGNDEATH_STATE", CreatureState::FEIGNDEATH);
 	setGlobalLong("COMBATATTITUDEEVASIVE_STATE", CreatureState::COMBATATTITUDEEVASIVE);
+	setGlobalLong("COMBATATTITUDENORMAL_STATE", CreatureState::COMBATATTITUDENORMAL);
 	setGlobalLong("COMBATATTITUDENORMAL_STATE", CreatureState::COMBATATTITUDENORMAL);
 	setGlobalLong("COMBATATTITUDEAGGRESSIVE_STATE", CreatureState::COMBATATTITUDEAGGRESSIVE);
 	setGlobalLong("TUMBLING_STATE", CreatureState::TUMBLING);
@@ -723,7 +724,6 @@ void CommandConfigManager::parseVariableData(String varName, LuaObject &command,
 				lua_rawgeti(L, -1, i);
 				LuaObject dot(L);
 				combatCommand->addDotEffect(DotEffect(dot));
-				//System::out << "count " << combatCommand->getDotEffects()->size()<< endl;
 				dot.pop();
 			}
 
@@ -868,7 +868,8 @@ void CommandConfigManager::registerCommands() {
 	registerCommands3();
 	registerCommands4();
 
-	commandFactory.registerCommand<FixJediCommand>(String("fixjedi").toLowerCase());
+	// NOTE: FixJedi factory is registered in registerSpecialCommands() BEFORE createCommand("fixjedi")
+	// so we do not register it again here.
 
 	//Space Commands
 	commandFactory.registerCommand<CommCommand>(String("comm").toLowerCase());
