@@ -91,6 +91,11 @@ Core3 = {
         ZoneAllowedConnections = 30000,
         ZoneGalaxyID = 2, --The actual zone server's galaxyID. Should coordinate with your login server.
 
+                ----- SWGReturns debug/toggles -----
+        swgr_disableWeaponCerts       = true,
+        swgr_disableWearableSkillReqs = true,
+        swgr_disableWearableRaceCheck = true,
+        
         -------- GROUND ZONES -------
         ZonesEnabled = {
                 -------- PRE-CU ZONES -------
