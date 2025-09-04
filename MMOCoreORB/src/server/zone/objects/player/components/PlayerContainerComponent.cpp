@@ -14,6 +14,8 @@
 #include "server/zone/managers/player/PlayerManager.h"
 #include "server/zone/ZoneServer.h"
 #include "server/zone/managers/visibility/VisibilityManager.h"
+#include "templates/SharedTangibleObjectTemplate.h"   // for playerRaces access
+#include <cstdlib>                                    // for std::getenv
 
 int PlayerContainerComponent::canAddObject(SceneObject* sceneObject, SceneObject* object, int containmentType, String& errorDescription) const {
 	CreatureObject* creo = dynamic_cast<CreatureObject*>(sceneObject);
@@ -28,13 +30,21 @@ int PlayerContainerComponent::canAddObject(SceneObject* sceneObject, SceneObject
 		SharedTangibleObjectTemplate* tanoData = dynamic_cast<SharedTangibleObjectTemplate*>(wearable->getObjectTemplate());
 
 		if (tanoData != nullptr) {
-			const auto races = tanoData->getPlayerRaces();
-			String race = creo->getObjectTemplate()->getFullTemplateString();
+			// Environment toggle: export SWGR_DISABLE_WEARABLE_RACE_CHECK=1 to bypass race allow-list
+			bool disableWearableRaceCheck = false;
+			if (const char* env = std::getenv("SWGR_DISABLE_WEARABLE_RACE_CHECK")) {
+				disableWearableRaceCheck = (*env && *env != '0');
+			}
 
-			if (!races->contains(race.hashCode())) {
-				errorDescription = "You lack the necessary requirements to wear this object";
+			if (!disableWearableRaceCheck) {
+				const auto races = tanoData->getPlayerRaces();
+				String race = creo->getObjectTemplate()->getFullTemplateString();
 
-				return TransferErrorCode::PLAYERUSEMASKERROR;
+				if (!races->contains(race.hashCode())) {
+					errorDescription = "You lack the necessary requirements to wear this object";
+
+					return TransferErrorCode::PLAYERUSEMASKERROR;
+				}
 			}
 		}
 
