@@ -20,7 +20,7 @@
 #include "server/zone/ZoneProcessServer.h"
 #include "server/zone/managers/player/PlayerMap.h"
 #include "server/chat/ChatManager.h"
-
+#include <cstdlib> // <-- for std::getenv
 
 void WeaponObjectImplementation::initializeTransientMembers() {
 	TangibleObjectImplementation::initializeTransientMembers();
@@ -505,7 +505,6 @@ int WeaponObjectImplementation::getIdealAccuracy(bool withPup) const {
 	return idealAccuracy;
 }
 
-
 int WeaponObjectImplementation::getMaxRangeAccuracy(bool withPup) const {
 	if (powerupObject != nullptr && withPup)
 		return maxRangeAccuracy + (abs(maxRangeAccuracy) * powerupObject->getPowerupStat("maxRangeAccuracy"));
@@ -529,7 +528,6 @@ float WeaponObjectImplementation::getAttackSpeed(bool withPup) const {
 
 	return calcSpeed;
 }
-
 
 float WeaponObjectImplementation::getMaxDamage(bool withPup) const {
 	float damage = maxDamage;
@@ -572,7 +570,6 @@ float WeaponObjectImplementation::getDamageRadius(bool withPup) const {
 
 	return damageRadius;
 }
-
 
 int WeaponObjectImplementation::getHealthAttackCost(bool withPup) const {
 	if (powerupObject != nullptr && withPup)
@@ -667,21 +664,44 @@ void WeaponObjectImplementation::updateCraftingValues(CraftingValues* values, bo
 	setConditionDamage(0);
 }
 
+// ---- toggled cert check using environment var ----
 bool WeaponObjectImplementation::isCertifiedFor(CreatureObject* object) const {
 	ManagedReference<PlayerObject*> ghost = object->getPlayerObject();
 
 	if (ghost == nullptr)
 		return false;
 
+	// Environment toggle: export SWGR_DISABLE_WEAPON_CERTS=1 to bypass checks
+	bool disableWeaponCerts = false;
+	if (const char* env = std::getenv("SWGR_DISABLE_WEAPON_CERTS")) {
+		disableWeaponCerts = (*env != '\0' && *env != '0');
+	}
+	if (disableWeaponCerts)
+		return true;
+
 	const auto certificationsRequired = weaponTemplate->getCertificationsRequired();
 
+	bool allOk = true;
 	for (int i = 0; i < certificationsRequired->size(); ++i) {
 		const String& cert = certificationsRequired->get(i);
 
-		if (!ghost->hasAbility(cert) && !object->hasSkill(cert)) {
-			return false;
+		const bool hasAbility = ghost->hasAbility(cert);
+		const bool hasSkill   = object->hasSkill(cert);
+
+		if (!hasAbility && !hasSkill) {
+			allOk = false;
+
+			info() << "[CertCheck] "
+			       << object->getDisplayedName()
+			       << " missing cert '" << cert
+			       << "' (hasAbility=" << hasAbility
+			       << ", hasSkill=" << hasSkill << ") for weapon "
+			       << templateObject->getFullTemplateString();
 		}
 	}
+
+	if (!allOk)
+		return false;
 
 	return true;
 }
