@@ -174,6 +174,7 @@ Core3 = {
 
         TreFiles = {
                 "returns2.tre",
+                "returns1.tre",
                 "mtg_patch_023.tre",
                 "mtg_planets.tre",
                 "mtg_patch_022.tre",
