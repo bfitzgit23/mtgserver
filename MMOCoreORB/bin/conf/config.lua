@@ -173,7 +173,7 @@ Core3 = {
         TrePath = "/home/swgadmin/tre",
 
         TreFiles = {
-                "returns1.tre",
+                "returns2.tre",
                 "mtg_patch_023.tre",
                 "mtg_planets.tre",
                 "mtg_patch_022.tre",
