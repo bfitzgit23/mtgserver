@@ -728,3 +728,65 @@ includeFile("groups/wearables/wearables_common.lua")
 includeFile("groups/wearables/wearables_rare.lua")
 includeFile("groups/wearables/wearables_scarce.lua")
 includeFile("groups/wearables/wearables_uncommon.lua")
+
+-- Rare Named ColorCrystals
+includeFile("groups/crystal_mauls_vengence.lua")
+includeFile("groups/crystal_qui_gons_devotion.lua")
+includeFile("groups/crystal_baass_wisdom.lua")
+includeFile("groups/crystal_banes_heart.lua")
+includeFile("groups/crystal_bnars_sacrifice.lua")
+includeFile("groups/crystal_bondaras_folly.lua")
+includeFile("groups/crystal_dawn_of_dagobah.lua")
+includeFile("groups/crystal_gallias_intuition.lua")
+includeFile("groups/crystal_horns_future.lua")
+includeFile("groups/crystal_kenobis_legacy.lua")
+includeFile("groups/crystal_kits_ferocity.lua")
+includeFile("groups/crystal_kuns_blood.lua")
+includeFile("groups/crystal_mundis_response.lua")
+includeFile("groups/crystal_prowess_of_plo_koon.lua")
+includeFile("groups/crystal_quintessence_of_the_force.lua")
+includeFile("groups/crystal_strength_of_luminaria.lua")
+includeFile("groups/crystal_sunriders_destiny.lua")
+includeFile("groups/crystal_ulics_redemption.lua")
+includeFile("groups/crystal_windus_guile.lua")
+includeFile("groups/crystal_orange.lua")
+includeFile("groups/crystal_henriettes_might.lua")
+includeFile("groups/crystal_wickeds_burn.lua")
+
+-- Named Crystals Group
+includeFile("groups/named_crystals.lua")
+
+------------ Custom For Returns
+-- BH Stuff
+includeFile("groups/custom/bh_trophy.lua")
+includeFile("groups/custom/jedi_trophy.lua")
+includeFile("groups/custom/rancor_boss.lua")
+
+-- Returns Loots
+includeFile("groups/custom/Returns_painting_collectables.lua")
+includeFile("groups/custom/geo_custom_schematics.lua")
+includeFile("groups/custom/experimental_components.lua")
+includeFile("groups/custom/experimental_geo_cubes.lua")
+includeFile("groups/custom/themepark_specific_loot.lua")
+includeFile("groups/custom/jedi_clothing_attachments.lua")
+
+-- Epic Loot Groups (look into SRC changes needed to make this work)
+includeFile("groups/weapon/high_end_weapons_all.lua")
+includeFile("groups/armor/epic_armor_all.lua")
+includeFile("groups/custom/world_boss.lua")
+
+-- Generic Returns Loot Groups
+includeFile("groups/custom/rare_boss_loot_tier1.lua")
+
+-- Dantooine Returns
+includeFile("groups/custom/dantooine/kunga_pygmy_graul_common.lua")
+includeFile("groups/custom/dantooine/kunga_pygmy_graul_uncommon.lua")
+
+-- Dathomir Returns
+includeFile("groups/custom/dathomir/force_corrupted_rancor_common.lua")
+includeFile("groups/custom/dathomir/force_corrupted_rancor_uncommon.lua")
+
+-- Generic Stuff
+includeFile("groups/containers.lua")
+includeFile("groups/custom/rare_spider.lua")
+------------ Custom For Returns
