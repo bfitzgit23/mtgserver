@@ -156,13 +156,7 @@ knightTrialQuests = {
 		trialType = TRIAL_HUNT_FACTION,
 		rebelTarget = "storm_commando",
 		imperialTarget = "rebel_commando",
-		huntGoal = 10
-	},
-	{
-		trialName = "giant_canyon_krayt",
-		trialType = TRIAL_HUNT,
-		huntTarget = "giant_canyon_krayt_dragon",
-		huntGoal = 1
+		huntGoal = 15
 	},
 }
 

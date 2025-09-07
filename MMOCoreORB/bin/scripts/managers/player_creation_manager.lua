@@ -13,7 +13,7 @@ professions = {
 	"combat_brawler",
 	"combat_marksman",
 	"crafting_artisan",
-	"jedi_padawan",
+	--"jedi_padawan",
 	"outdoors_scout",
 	"science_medic",
 	"social_entertainer"
@@ -57,7 +57,7 @@ professionSpecificItems = {
 	combat_brawler = { brawlerOneHander, brawlerTwoHander, brawlerPolearm },
 	combat_marksman = { marksmanPistol, marksmanCarbine, marksmanRifle },
 	crafting_artisan = { genericTool, mineralTool, chemicalTool },
-	jedi_padawan = { robe, jediTool, jediCrystal, genericTool, mineralTool, chemicalTool, gasTool },
+	--jedi_padawan = { robe, jediTool, jediCrystal, genericTool, mineralTool, chemicalTool, gasTool },
 	outdoors_scout = { genericTool },
 	science_medic = { foodTool },
 	social_entertainer = { slitherhorn }

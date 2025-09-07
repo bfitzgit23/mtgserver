@@ -1,4 +1,3 @@
-
 frsEnabled = 1
 
 -- Object ID of Enclave buildings
