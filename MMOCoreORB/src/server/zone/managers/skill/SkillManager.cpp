@@ -227,6 +227,10 @@ void SkillManager::loadXpLimits() {
 }
 
 void SkillManager::addAbility(PlayerObject* ghost, const String& abilityName, bool notifyClient) {
+	if (ghost == nullptr) {
+		return;
+	}
+
 	Ability* ability = abilityMap.get(abilityName);
 
 	if (ability != nullptr)
@@ -234,6 +238,10 @@ void SkillManager::addAbility(PlayerObject* ghost, const String& abilityName, bo
 }
 
 void SkillManager::removeAbility(PlayerObject* ghost, const String& abilityName, bool notifyClient) {
+	if (ghost == nullptr) {
+		return;
+	}
+
 	Ability* ability = abilityMap.get(abilityName);
 
 	if (ability != nullptr)
@@ -241,6 +249,10 @@ void SkillManager::removeAbility(PlayerObject* ghost, const String& abilityName,
 }
 
 void SkillManager::addAbilities(PlayerObject* ghost, const Vector<String>& abilityNames, bool notifyClient) {
+	if (ghost == nullptr) {
+		return;
+	}
+
 	Vector<Ability*> abilities;
 
 	for (int i = 0; i < abilityNames.size(); ++i) {
@@ -256,6 +268,10 @@ void SkillManager::addAbilities(PlayerObject* ghost, const Vector<String>& abili
 }
 
 void SkillManager::removeAbilities(PlayerObject* ghost, const Vector<String>& abilityNames, bool notifyClient) {
+	if (ghost == nullptr) {
+		return;
+	}
+
 	Vector<Ability*> abilities;
 
 	for (int i = 0; i < abilityNames.size(); ++i) {
@@ -270,14 +286,37 @@ void SkillManager::removeAbilities(PlayerObject* ghost, const Vector<String>& ab
 	ghost->removeAbilities(abilities, notifyClient);
 }
 
-void SkillManager::addDroidCommand(PlayerObject* ghost, const String& abilityName) {
-	Ability* ability = abilityMap.get(abilityName);
+void SkillManager::addDroidCommands(PlayerObject* ghost, const Vector<String>& abilityNames, bool notifyClient) {
+	if (ghost == nullptr || abilityNames.size() == 0) {
+		return;
+	}
 
-	if (ability != nullptr)
-		ghost->addDroidCommand(ability);
+	Vector<Ability*> droidCommands;
+
+	for (int i = 0; i < abilityNames.size(); ++i) {
+		const String& abilityName = abilityNames.get(i);
+
+		if (ghost->hasDroidCommand(abilityName)) {
+			continue;
+		}
+
+		Ability* ability = abilityMap.get(abilityName);
+
+		if (ability == nullptr) {
+			continue;
+		}
+
+		droidCommands.add(ability);
+	}
+
+	ghost->addDroidCommands(droidCommands, notifyClient);
 }
 
 void SkillManager::removeDroidCommands(PlayerObject* ghost) {
+	if (ghost == nullptr) {
+		return;
+	}
+
 	ghost->removeDroidCommands();
 }
 
