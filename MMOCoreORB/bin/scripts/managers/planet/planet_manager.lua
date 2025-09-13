@@ -361,7 +361,7 @@ hoth = {
 	},
 
 	-- Optional: set a JTL launch point if you use space for Hoth
-	-- jtlLaunchPoint = {"space_hoth", 0, 0, 0},
+	jtlLaunchPoint = {"space_hoth", 0, 0, 0},
 
 	badgeAreas = {
 		--{"badge_echo_base",-3500,-4200,0,30,999},
