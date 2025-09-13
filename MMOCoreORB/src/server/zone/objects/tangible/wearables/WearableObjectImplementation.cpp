@@ -14,6 +14,7 @@
 #include "server/zone/managers/skill/SkillModManager.h"
 #include "server/zone/objects/tangible/wearables/ModSortingHelper.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
+#include <cmath> // for std::floor
 
 void WearableObjectImplementation::initializeTransientMembers() {
 	TangibleObjectImplementation::initializeTransientMembers();
@@ -21,7 +22,6 @@ void WearableObjectImplementation::initializeTransientMembers() {
 	// Wearable has too many attachments on it for the allowed socket count
 	while (usedSocketCount > socketCount) {
 		wearableSkillMods.removeElementAt(wearableSkillMods.size() - 1);
-
 		usedSocketCount--;
 	}
 }
@@ -29,7 +29,7 @@ void WearableObjectImplementation::initializeTransientMembers() {
 void WearableObjectImplementation::fillAttributeList(AttributeListMessage* alm, CreatureObject* object) {
 	TangibleObjectImplementation::fillAttributeList(alm, object);
 
-	for(int i = 0; i < wearableSkillMods.size(); ++i) {
+	for (int i = 0; i < wearableSkillMods.size(); ++i) {
 		String key = wearableSkillMods.elementAt(i).getKey();
 		String statname = "cat_skill_mod_bonus.@stat_n:" + key;
 		int value = wearableSkillMods.get(key);
@@ -38,11 +38,10 @@ void WearableObjectImplementation::fillAttributeList(AttributeListMessage* alm, 
 			alm->insertAttribute(statname, value);
 	}
 
-	//Anti Decay Kit
+	// Anti Decay Kit
 	if (hasAntiDecayKit() && !isArmorObject()){
 		alm->insertAttribute("@veteran_new:antidecay_examine_title", "@veteran_new:antidecay_examine_text");
 	}
-
 }
 
 void WearableObjectImplementation::updateCraftingValues(CraftingValues* values, bool initialUpdate) {
@@ -52,7 +51,7 @@ void WearableObjectImplementation::updateCraftingValues(CraftingValues* values, 
 	 * hitpoints			1000-1000 (Don't Use)
 	 */
 	if (initialUpdate) {
-		if(values->hasExperimentalAttribute("sockets") && values->getCurrentValue("sockets") >= 0)
+		if (values->hasExperimentalAttribute("sockets") && values->getCurrentValue("sockets") >= 0)
 			generateSockets(values);
 	}
 }
@@ -105,7 +104,7 @@ void WearableObjectImplementation::generateSockets(CraftingValues* craftingValue
 	if (generatedCount > MAXSOCKETS)
 		generatedCount = MAXSOCKETS;
 	else if (generatedCount > 3 && generatedCount <= 3.75f)
-		generatedCount = floor(generatedCount);
+		generatedCount = std::floor(generatedCount);
 
 	usedSocketCount = 0;
 	socketCount = (int)generatedCount;
@@ -120,9 +119,9 @@ void WearableObjectImplementation::applyAttachment(CreatureObject* player, Attac
 		return;
 	}
 
-	if (getRemainingSockets() < 1 && wearableSkillMods.size() > 10) {
-
-	if (getRemainingSockets() < 1 || wearableSkillMods.size() > 5) {
+	// Guard: must have sockets available and not exceed max mod count.
+	// (Consolidated the broken/duplicated condition.)
+	if (getRemainingSockets() < 1 || wearableSkillMods.size() > 10) {
 		return;
 	}
 
@@ -136,9 +135,8 @@ void WearableObjectImplementation::applyAttachment(CreatureObject* player, Attac
 	VectorMap<String, int>* skillModifiers = attachment->getSkillMods();
 
 	for (int i = 0; i < skillModifiers->size(); i++) {
-		auto key = skillModifiers->elementAt(i).getKey();
-		auto value = skillModifiers->elementAt(i).getValue();
-
+		String key = skillModifiers->elementAt(i).getKey();
+		int value = skillModifiers->elementAt(i).getValue();
 		sortedMods.put(ModSortingHelper(key, value));
 	}
 
@@ -193,8 +191,7 @@ void WearableObjectImplementation::applySkillModsTo(CreatureObject* creature) co
 		String name = wearableSkillMods.elementAt(i).getKey();
 		int value = wearableSkillMods.get(name);
 
-		if (!SkillModManager::instance()->isWearableModDisabled(name))
-		{
+		if (!SkillModManager::instance()->isWearableModDisabled(name)) {
 			creature->addSkillMod(SkillModManager::WEARABLE, name, value, true);
 			creature->updateSpeedAndAccelerationMods();
 		}
@@ -212,8 +209,7 @@ void WearableObjectImplementation::removeSkillModsFrom(CreatureObject* creature)
 		String name = wearableSkillMods.elementAt(i).getKey();
 		int value = wearableSkillMods.get(name);
 
-		if (!SkillModManager::instance()->isWearableModDisabled(name))
-		{
+		if (!SkillModManager::instance()->isWearableModDisabled(name)) {
 			creature->removeSkillMod(SkillModManager::WEARABLE, name, value, true);
 			creature->updateSpeedAndAccelerationMods();
 		}
@@ -233,15 +229,15 @@ bool WearableObjectImplementation::isEquipped() {
 String WearableObjectImplementation::repairAttempt(int repairChance) {
 	String message = "@error_message:";
 
-	if(repairChance < 25) {
+	if (repairChance < 25) {
 		message += "sys_repair_failed";
 		setMaxCondition(1, true);
 		setConditionDamage(0, true);
-	} else if(repairChance < 50) {
+	} else if (repairChance < 50) {
 		message += "sys_repair_imperfect";
 		setMaxCondition(getMaxCondition() * .65f, true);
 		setConditionDamage(0, true);
-	} else if(repairChance < 75) {
+	} else if (repairChance < 75) {
 		setMaxCondition(getMaxCondition() * .80f, true);
 		setConditionDamage(0, true);
 		message += "sys_repair_slight";
@@ -253,4 +249,3 @@ String WearableObjectImplementation::repairAttempt(int repairChance) {
 
 	return message;
 }
-
