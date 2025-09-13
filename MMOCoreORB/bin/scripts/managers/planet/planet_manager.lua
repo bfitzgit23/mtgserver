@@ -253,12 +253,10 @@ kashyyyk_main = {
 	gcwEnabled = 0,
 
 	planetTravelPoints = {
-<<<<<<< HEAD
+
 		{name = "Kachirho Starport", x = -690.3, z = 20.4, y = -168, interplanetaryTravelAllowed = 1, incomingTravelAllowed = 1},
-=======
 		{name = "Kachirho Starport", x = -690.3, z = 20.4, y = -168, interplanetaryTravelAllowed = 1, incomingTravelAllowed = 1, landingRange = 3},
 
->>>>>>> upstream/update-wip
 	},
 
 	badgeAreas = {
