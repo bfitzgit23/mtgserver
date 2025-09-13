@@ -120,11 +120,9 @@ void WearableObjectImplementation::applyAttachment(CreatureObject* player, Attac
 		return;
 	}
 
-<<<<<<< HEAD
 	if (getRemainingSockets() < 1 && wearableSkillMods.size() > 10) {
-=======
+
 	if (getRemainingSockets() < 1 || wearableSkillMods.size() > 5) {
->>>>>>> upstream/update-wip
 		return;
 	}
 
